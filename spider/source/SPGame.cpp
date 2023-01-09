@@ -4,7 +4,7 @@
 
 #include "SPGame.h"
 #include "SPMainMenu.h"
-//#include "Level.h"
+#include "SPScene.h"
 #include "EventManager.h"
 
 SPGame::SPGame()
@@ -30,13 +30,13 @@ void SPGame::eventCallback(Event event)
 
 void SPGame::update()
 {
-//    if(shouldStartNewGame)
-//    {
-//        sceneStack.clearScenes();
-//        Scene* newLevel = new Level("assets/level1.txt");
-//        sceneStack.pushScene(newLevel);
-//        shouldStartNewGame = false;
-//    }
+    if(shouldStartNewGame)
+    {
+        sceneStack.clearScenes();
+        Scene* mainScene = new SPScene();
+        sceneStack.pushScene(mainScene);
+        shouldStartNewGame = false;
+    }
 
     Game::update();
 }
