@@ -8,16 +8,10 @@
 #include "Scene.h"
 #include "IInputReceiver.h"
 
-class SPMainMenu : public Scene, IInputReceiver
+class SPMainMenu : public Scene
 {
 public:
     SPMainMenu();
-    ~SPMainMenu();
-
-    // TODO: This should probably just have buttons in it instead of supporting the input directly
-    //IInputReceiver
-    void mouseInputCallback(double xpos, double ypos, MouseButton button, Action action, Modifier mods) override {}
-    void keyInputCallback(Key key, int scancode, Action action, Modifier mods) override;
 };
 
 #endif //SP_MAIN_MENU_H

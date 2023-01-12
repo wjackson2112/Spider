@@ -6,6 +6,7 @@
 #define SP_CARD_H
 
 #include "Entity.h"
+#include "IInputReceiver.h"
 
 enum SPCardSuit
 {
@@ -32,10 +33,29 @@ enum SPCardValue
     SPVALUE_KING
 };
 
-class SPCard : public Entity
+#define DRAG_THRESHOLD 5
+#define NO_GRAB glm::vec2(-1, -1)
+
+class SPCard : public Entity, IInputReceiver
 {
+    SPCardSuit suit;
+    SPCardValue value;
+
+    glm::vec2 size;
+    glm::vec2 grabPosition = NO_GRAB;
+    glm::vec2 grabOffset = NO_GRAB;
+
 public:
-    SPCard();
+    SPCard(glm::vec2 position, SPCardSuit suit, SPCardValue value);
+
+    SPCardSuit getSuit() { return suit; }
+    SPCardValue getValue() { return value; }
+
+    void update(float deltaTime);
+
+    // IInputReceiver
+    virtual void mouseInputCallback(double xpos, double ypos, MouseButton button, Action action, Modifier mods);
+    virtual void keyInputCallback(Key key, int scancode, Action action, Modifier mods) {};
 };
 
 #endif //SP_CARD_H
