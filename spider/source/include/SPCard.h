@@ -5,7 +5,10 @@
 #ifndef SP_CARD_H
 #define SP_CARD_H
 
+#include <map>
+
 #include "Entity.h"
+#include "ICollisionReceiver.h"
 
 enum SPCardSuit
 {
@@ -35,7 +38,7 @@ enum SPCardValue
 #define DRAG_THRESHOLD 5
 #define NO_GRAB glm::vec2(-1, -1)
 
-class SPCard : public Entity
+class SPCard : public Entity, public ICollisionReceiver
 {
     SPCardSuit suit;
     SPCardValue value;
@@ -44,13 +47,26 @@ class SPCard : public Entity
     glm::vec2 grabPosition = NO_GRAB;
     glm::vec2 grabOffset = NO_GRAB;
 
+    std::map<ICollisionReceiver*, glm::vec2> overlaps;
+
 public:
     SPCard(glm::vec2 position, SPCardSuit suit, SPCardValue value);
 
     SPCardSuit getSuit() { return suit; }
     SPCardValue getValue() { return value; }
 
-    void update(float deltaTime);
+protected:
+    void settleCard(); // Settle the card in a stack
+
+public:
+    bool containsPoint(glm::vec2 point);
+    bool isTopmostAtPoint(glm::vec2 point);
+
+    //Entity
+    void update(float deltaTime) override;
+
+    //ICollisionReceiver
+    void collisionCallback(ICollisionReceiver* collisionReceiver, glm::vec3 overlap);
 };
 
 #endif //SP_CARD_H
