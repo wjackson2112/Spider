@@ -2,7 +2,8 @@
 add_executable(Spider source/SPGame.cpp
                       source/SPMainMenu.cpp
                       source/SPBackground.cpp
-                      source/SPScene.cpp source/SPCard.cpp source/include/SPCard.h)
+                      source/SPScene.cpp
+                      source/SPCard.cpp)
 
 target_include_directories(Spider
                            PUBLIC

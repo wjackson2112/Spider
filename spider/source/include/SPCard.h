@@ -50,6 +50,8 @@ class SPCard : public Entity, public ICollisionReceiver
     std::map<ICollisionReceiver*, glm::vec2> overlaps;
 
 public:
+    SPCard* snappedCard = nullptr;
+
     SPCard(glm::vec2 position, SPCardSuit suit, SPCardValue value);
 
     SPCardSuit getSuit() { return suit; }
@@ -57,10 +59,14 @@ public:
 
 protected:
     void settleCard(); // Settle the card in a stack
+    void snap(SPCard*);
+    bool isInSnapPile(SPCard* other);
 
 public:
     bool containsPoint(glm::vec2 point);
     bool isTopmostAtPoint(glm::vec2 point);
+    bool isTopmost();
+
 
     //Entity
     void update(float deltaTime) override;

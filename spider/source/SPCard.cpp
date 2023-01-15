@@ -7,11 +7,13 @@
 #include <iostream>
 
 #include "AssetManager.h"
+#include "EntityManager.h"
 #include "InputComponent.h"
 //#include "TextComponent.h"
 #include "SpriteSheetComponent2D.h"
 #include "CollisionComponent2DAABB.h"
 
+#define STACK_MIN 0.0f
 #define STACK_OFFSET 0.0001f
 #define STACK_MAX 0.1f
 
@@ -50,7 +52,7 @@ SPCard::SPCard(glm::vec2 position, SPCardSuit suit, SPCardValue value)
 //                                                                  "arial12", 12);
 //    auto* textComponent = new TextComponent(textShader, textFont, text);
 //
-//    textComponent->setColor(glm::vec3(.25f, .5f, .25f));
+//    textComponent->setColor(glm::vec3(.25f, .25f, .5f));
 //    textComponent->setTransform(glm::vec3(0, -10.f, 0.001f));
 //    addComponent(textComponent);
 
@@ -77,9 +79,19 @@ void SPCard::update(float deltaTime)
                     grabOffset = glm::vec2(grabPosition.x - cardPosition.x, grabPosition.y -
                                                                             cardPosition.y); // The offset into the card the grab occurred
 
+                    if(parent)
+                    {
+                        Transform worldTransformBefore = getWorldTransform();
+                        SPCard* parentCard = dynamic_cast<SPCard*>(parent);
+                        parentCard->snappedCard = nullptr;
+                        setParent(nullptr);
+
+                        this->transform.setPosition(worldTransformBefore.getPosition());
+                    }
+
                     // Pop the card to the front
-                    this->transform.setPosition(glm::vec3(this->transform.getPosition().x,
-                                                          this->transform.getPosition().y,
+                    this->transform.setPosition(glm::vec3(this->getWorldTransform().getPosition().x,
+                                                          this->getWorldTransform().getPosition().y,
                                                           STACK_MAX));
                 }
 
@@ -87,6 +99,29 @@ void SPCard::update(float deltaTime)
             }
             case ACTION_RELEASE:
             {
+                if(grabPosition != NO_GRAB && grabOffset != NO_GRAB)
+                {
+                    SPCard *bestSnap = nullptr;
+                    float bestArea = 0.0f;
+                    for (auto it = overlaps.begin(); it != overlaps.end(); it++)
+                    {
+                        if (SPCard *newSnap = dynamic_cast<SPCard *>(it->first))
+                        {
+                            float newArea = it->second.x * it->second.y;
+                            if (newSnap->snappedCard == nullptr &&
+                                !this->isInSnapPile(newSnap) &&
+                                newArea > bestArea)
+                            {
+                                bestSnap = newSnap;
+                                bestArea = newArea;
+                            }
+                        }
+                    }
+
+                    if (bestSnap)
+                        bestSnap->snap(this);
+                }
+
                 grabPosition = NO_GRAB;
                 grabOffset = NO_GRAB;
 
@@ -115,7 +150,7 @@ void SPCard::update(float deltaTime)
     if(grabPosition == NO_GRAB && grabOffset == NO_GRAB)
         settleCard();
 
-//    std::string depth = std::to_string(this->getTransform()->getPosition().z);
+//    std::string depth = std::to_string(this->getWorldTransform().getPosition().z);
 //    this->getComponent<TextComponent>()->setText(depth);
 
     overlaps.clear();
@@ -123,15 +158,19 @@ void SPCard::update(float deltaTime)
 
 void SPCard::settleCard()
 {
+    // Cards with a parent are snapped and follow the depth of the parent
+    if(parent)
+        return;
+
     float newZ = STACK_OFFSET;
     for (auto it = overlaps.begin(); it != overlaps.end(); it++)
     {
         if (SPCard *otherCard = dynamic_cast<SPCard *>(it->first))
         {
-            if (otherCard->getTransform()->getPosition().z <= this->transform.getPosition().z &&
-                otherCard->getTransform()->getPosition().z >= newZ)
+            if (otherCard->getWorldTransform().getPosition().z <= this->getWorldTransform().getPosition().z &&
+                otherCard->getWorldTransform().getPosition().z >= newZ)
             {
-                newZ = otherCard->getTransform()->getPosition().z + STACK_OFFSET;
+                newZ = otherCard->getWorldTransform().getPosition().z + STACK_OFFSET;
             }
         }
     }
@@ -143,35 +182,68 @@ void SPCard::settleCard()
 
 bool SPCard::containsPoint(glm::vec2 point)
 {
-    glm::vec2 cardPosition = transform.getPosition2();
+    glm::vec2 cardPosition = getWorldTransform().getPosition2();
     return  point.x >= cardPosition.x && point.x <= cardPosition.x + size.x &&
             point.y >= cardPosition.y && point.y <= cardPosition.y + size.y;
 }
 
 bool SPCard::isTopmostAtPoint(glm::vec2 point)
 {
+    if(!containsPoint(point))
+        return false;
+
     bool isTopmost = true;
-    if (containsPoint(point))
+    for (auto it = overlaps.begin(); it != overlaps.end(); it++)
     {
-        for (auto it = overlaps.begin(); it != overlaps.end(); it++)
+        if (SPCard *otherCard = dynamic_cast<SPCard *>(it->first))
         {
-            if (SPCard *otherCard = dynamic_cast<SPCard *>(it->first))
+            if (otherCard->containsPoint(point) &&
+                otherCard->getWorldTransform().getPosition().z > getWorldTransform().getPosition().z)
             {
-                if (otherCard->containsPoint(point) &&
-                    otherCard->getTransform()->getPosition().z > transform.getPosition().z)
-                {
-                    isTopmost = false;
-                    break;
-                }
+                isTopmost = false;
+                break;
             }
         }
     }
-    else
+
+    return isTopmost;
+}
+
+bool SPCard::isTopmost()
+{
+    bool isTopmost = true;
+    for (auto it = overlaps.begin(); it != overlaps.end(); it++)
     {
-        isTopmost = false;
+        if (SPCard *otherCard = dynamic_cast<SPCard *>(it->first))
+        {
+            if (otherCard->getWorldTransform().getPosition().z > getWorldTransform().getPosition().z)
+            {
+                isTopmost = false;
+                break;
+            }
+        }
     }
 
     return isTopmost;
+}
+
+void SPCard::snap(SPCard* other)
+{
+    other->setParent(this);
+    other->getTransform()->setPosition(glm::vec3(0, 10, STACK_OFFSET));
+    this->snappedCard = other;
+}
+
+bool SPCard::isInSnapPile(SPCard *other)
+{
+    SPCard *currChild = snappedCard;
+    while(currChild != nullptr)
+    {
+        if (currChild == other)
+            return true;
+        currChild = currChild->snappedCard;
+    }
+    return false;
 }
 
 void SPCard::collisionCallback(ICollisionReceiver *collisionReceiver, glm::vec3 overlap)
