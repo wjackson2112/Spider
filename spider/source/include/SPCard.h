@@ -11,6 +11,10 @@
 #include "ICollisionReceiver.h"
 #include "SPSnapValidator.h"
 
+#define STACK_MIN 0.0f
+#define STACK_OFFSET 0.0001f
+#define STACK_MAX 0.1f
+
 enum SPCardSuit
 {
     SPSUIT_CLUB,
@@ -49,6 +53,8 @@ class SPCard : public Entity, public ICollisionReceiver
     glm::vec2 grabPosition = NO_GRAB;
     glm::vec2 grabOffset = NO_GRAB;
 
+    SPCard* prevParent = nullptr;
+
     std::map<ICollisionReceiver*, glm::vec2> overlaps;
 
 public:
@@ -62,7 +68,8 @@ public:
 protected:
     void settleCard(); // Settle the card in a stack
     void snap(SPCard*);
-    bool isInSnapPile(SPCard* other);
+    void unsnap();
+    bool isInSnapChain(SPCard* other);
 
 public:
     bool containsPoint(glm::vec2 point);
