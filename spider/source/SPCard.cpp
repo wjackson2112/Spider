@@ -230,7 +230,7 @@ bool SPCard::isTopmost()
 void SPCard::snap(SPCard* other)
 {
     other->setParent(this);
-    other->getTransform()->setPosition(glm::vec3(0, 10, STACK_OFFSET));
+    other->getTransform()->setPosition(glm::vec3(0, 20, STACK_OFFSET));
     this->snappedCard = other;
 }
 
