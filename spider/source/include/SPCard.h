@@ -9,13 +9,14 @@
 
 #include "Entity.h"
 #include "ICollisionReceiver.h"
+#include "SPSnapValidator.h"
 
 enum SPCardSuit
 {
     SPSUIT_CLUB,
     SPSUIT_DIAMOND,
-    SPSUIT_HEART,
-    SPSUIT_SPADE
+    SPSUIT_SPADE,
+    SPSUIT_HEART
 };
 
 enum SPCardValue
@@ -42,6 +43,7 @@ class SPCard : public Entity, public ICollisionReceiver
 {
     SPCardSuit suit;
     SPCardValue value;
+    SPSnapValidator* validator;
 
     glm::vec2 size;
     glm::vec2 grabPosition = NO_GRAB;
@@ -52,7 +54,7 @@ class SPCard : public Entity, public ICollisionReceiver
 public:
     SPCard* snappedCard = nullptr;
 
-    SPCard(glm::vec2 position, SPCardSuit suit, SPCardValue value);
+    SPCard(glm::vec2 position, SPCardSuit suit, SPCardValue value, SPSnapValidator* validator);
 
     SPCardSuit getSuit() { return suit; }
     SPCardValue getValue() { return value; }

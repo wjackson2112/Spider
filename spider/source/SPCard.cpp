@@ -17,9 +17,10 @@
 #define STACK_OFFSET 0.0001f
 #define STACK_MAX 0.1f
 
-SPCard::SPCard(glm::vec2 position, SPCardSuit suit, SPCardValue value)
+SPCard::SPCard(glm::vec2 position, SPCardSuit suit, SPCardValue value, SPSnapValidator* validator)
 : suit(suit)
 , value(value)
+, validator(validator)
 , size(49.f, 64.f)
 {
     this->transform.setPosition2(position);
@@ -76,8 +77,8 @@ void SPCard::update(float deltaTime)
                 if(isTopmostAtPoint(event.position))
                 {
                     grabPosition = event.position; // Where the grab started
-                    grabOffset = glm::vec2(grabPosition.x - cardPosition.x, grabPosition.y -
-                                                                            cardPosition.y); // The offset into the card the grab occurred
+                    grabOffset = glm::vec2(grabPosition.x - cardPosition.x,
+                                           grabPosition.y - cardPosition.y); // The offset into the card the grab occurred
 
                     if(parent)
                     {
@@ -110,7 +111,8 @@ void SPCard::update(float deltaTime)
                             float newArea = it->second.x * it->second.y;
                             if (newSnap->snappedCard == nullptr &&
                                 !this->isInSnapPile(newSnap) &&
-                                newArea > bestArea)
+                                newArea > bestArea &&
+                                validator->validate(newSnap, this))
                             {
                                 bestSnap = newSnap;
                                 bestArea = newArea;
@@ -120,6 +122,9 @@ void SPCard::update(float deltaTime)
 
                     if (bestSnap)
                         bestSnap->snap(this);
+                    else
+                        transform.setPosition2(glm::vec2(grabPosition.x - grabOffset.x,
+                                                         grabPosition.y - grabOffset.y));
                 }
 
                 grabPosition = NO_GRAB;
