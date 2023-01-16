@@ -10,9 +10,9 @@
 #include "Entity.h"
 #include "ICollisionReceiver.h"
 #include "SPSnapValidator.h"
+#include "SPPilable.h"
 
 #define STACK_MIN 0.0f
-#define STACK_OFFSET 0.0001f
 #define STACK_MAX 0.1f
 
 enum SPCardSuit
@@ -43,7 +43,7 @@ enum SPCardValue
 #define DRAG_THRESHOLD 5
 #define NO_GRAB glm::vec2(-1, -1)
 
-class SPCard : public Entity, public ICollisionReceiver
+class SPCard : public SPPilable, public ICollisionReceiver
 {
     SPCardSuit suit;
     SPCardValue value;
@@ -53,7 +53,7 @@ class SPCard : public Entity, public ICollisionReceiver
     glm::vec2 grabPosition = NO_GRAB;
     glm::vec2 grabOffset = NO_GRAB;
 
-    SPCard* prevParent = nullptr;
+    SPPilable* prevParent = nullptr;
 
     std::map<ICollisionReceiver*, glm::vec2> overlaps;
 
@@ -75,7 +75,6 @@ public:
     bool containsPoint(glm::vec2 point);
     bool isTopmostAtPoint(glm::vec2 point);
     bool isTopmost();
-
 
     //Entity
     void update(float deltaTime) override;

@@ -5,12 +5,12 @@
 #ifndef SP_SNAP_VALIDATOR_H
 #define SP_SNAP_VALIDATOR_H
 
-#include "Entity.h"
+#include "SPPilable.h"
 
 class SPSnapValidator
 {
 public:
-    virtual bool validate(Entity* parent, Entity* child) = 0;
+    virtual bool validate(SPPilable* parent, SPPilable* child) = 0;
 };
 
 #endif //SP_SNAP_VALIDATOR_H

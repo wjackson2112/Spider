@@ -12,8 +12,6 @@
 //#include "TextComponent.h"
 #include "SpriteSheetComponent2D.h"
 #include "CollisionComponent2DAABB.h"
-#include "SPSnapComponent.h"
-
 
 
 SPCard::SPCard(glm::vec2 position, SPCardSuit suit, SPCardValue value, SPSnapValidator* validator)
@@ -37,17 +35,11 @@ SPCard::SPCard(glm::vec2 position, SPCardSuit suit, SPCardValue value, SPSnapVal
     auto* collisionComponent = new CollisionComponent2DAABB(this, size);
     addComponent(collisionComponent);
 
-    auto* snapComp = new SPSnapComponent(this->size);
-    snapComp->getTransform()->setPosition2(glm::vec2(0, 20));
-    addComponent(snapComp);
-
     InputConfig config = InputConfig();
     config.mouseButtons.push_back(MOUSE_BUTTON_1);
     config.receivesMousePosition = true;
     auto* inputComponent = new InputComponent(config);
     addComponent(inputComponent);
-
-
 
 //    std::string text = "0.0";
 //    Shader textShader = AssetManager::getInstance()->loadShader("shaders\\text.vert",
@@ -87,12 +79,8 @@ void SPCard::update(float deltaTime)
 
                     if(parent)
                     {
-                        prevParent = (SPCard*) parent; // TODO: Don't assume this is an SPCard
-                        Transform worldTransformBefore = getWorldTransform();
-
-                        dynamic_cast<SPCard*>(parent)->unsnap();
-
-                        this->transform.setPosition(worldTransformBefore.getPosition());
+                        prevParent = dynamic_cast<SPPilable*>(parent);
+                        removeFromPile();
                     }
 
                     // Pop the card to the front
@@ -107,36 +95,34 @@ void SPCard::update(float deltaTime)
             {
                 if(grabPosition != NO_GRAB && grabOffset != NO_GRAB)
                 {
-                    SPSnapComponent *bestSnap = nullptr;
+                    SPPilable *bestPilable = nullptr;
                     float bestArea = 0.0f;
                     for (auto it = overlaps.begin(); it != overlaps.end(); it++)
                     {
-                        if (SPSnapComponent *newSnap = dynamic_cast<SPSnapComponent *>(it->first))
+                        if(SPPilable* newPilable = dynamic_cast<SPPilable*>(it->first))
                         {
+                            // We're already piled with this card
+                            if(isInPile(newPilable))
+                                continue;
+
+                            SPPilable* newParent = newPilable->getPileEnd();
                             float newArea = it->second.x * it->second.y;
-                            SPCard* newSnapParent = dynamic_cast<SPCard*>(newSnap->getParent());
-                            SPCard* newSnapCard = newSnap->getSnappedCard();
-                            if (newSnapCard == nullptr &&
-                                !isInSnapChain(newSnapParent) &&
-                                newArea > bestArea &&
-                                validator->validate(newSnapParent, this))
+
+                            if(newArea > bestArea && validator->validate(newParent, this))
                             {
-                                bestSnap = newSnap;
+                                bestPilable = newPilable;
                                 bestArea = newArea;
                             }
                         }
                     }
 
-                    if (bestSnap)
-                        bestSnap->snap(this);
+                    if (bestPilable)
+                        bestPilable->addToPile(this);
+                    else if(prevParent)
+                        prevParent->addToPile(this);
                     else
-                    {
-                        if(prevParent)
-                            prevParent->snap(this);
-                        else
-                            transform.setPosition2(glm::vec2(grabPosition.x - grabOffset.x,
-                                                             grabPosition.y - grabOffset.y));
-                    }
+                        transform.setPosition2(glm::vec2(grabPosition.x - grabOffset.x,
+                                                         grabPosition.y - grabOffset.y));
                 }
 
                 grabPosition = NO_GRAB;
@@ -242,21 +228,6 @@ bool SPCard::isTopmost()
     }
 
     return isTopmost;
-}
-
-void SPCard::snap(SPCard* other)
-{
-    getComponent<SPSnapComponent>()->snap(other);
-}
-
-void SPCard::unsnap()
-{
-    getComponent<SPSnapComponent>()->unsnap();
-}
-
-bool SPCard::isInSnapChain(SPCard *other)
-{
-    return getComponent<SPSnapComponent>()->isInSnapChain(other);
 }
 
 void SPCard::collisionCallback(ICollisionReceiver *collisionReceiver, glm::vec3 overlap)

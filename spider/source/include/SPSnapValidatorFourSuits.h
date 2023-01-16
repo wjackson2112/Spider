@@ -10,7 +10,7 @@
 class SPSnapValidatorFourSuits : public SPSnapValidator
 {
 public:
-    bool validate(Entity* parent, Entity* child);
+    bool validate(SPPilable* parent, SPPilable* child);
 };
 
 #endif //SP_SNAP_VALIDATOR_FOUR_SUITS_H

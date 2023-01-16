@@ -5,18 +5,40 @@
 #include "SPSnapValidatorFourSuits.h"
 
 #include "SPCard.h"
+#include "SPPile.h"
 
-bool SPSnapValidatorFourSuits::validate(Entity* parent, Entity* child)
+bool SPSnapValidatorFourSuits::validate(SPPilable* parent, SPPilable* child)
 {
     if(SPCard* childCard = dynamic_cast<SPCard*>(child))
     {
-        if(SPCard* parentCard = dynamic_cast<SPCard*>(parent))
+        if(SPPile* parentPile = dynamic_cast<SPPile*>(parent))
         {
-            bool suitsAlternate = (parentCard->getSuit() % 2) != (childCard->getSuit() % 2);
-            bool valuesDecrease = parentCard->getValue() == childCard->getValue() + 1;
-            if(suitsAlternate && valuesDecrease)
+            if(parentPile->incrementing && childCard->getValue() == SPVALUE_ACE)
+                return true;
+            else if(!parentPile->incrementing && childCard->getValue() == SPVALUE_KING)
                 return true;
             return false;
+        }
+
+        if(SPCard* parentCard = dynamic_cast<SPCard*>(parent))
+        {
+            if(SPPile* rootPile = dynamic_cast<SPPile*>(parent->getPileRoot()))
+            {
+                if(rootPile->incrementing)
+                {
+                    bool suitsMatch = parentCard->getSuit() == childCard->getSuit();
+                    bool valuesIncrease = (parentCard->getValue() + 1) == childCard->getValue();
+                    if(suitsMatch && valuesIncrease)
+                        return true;
+                }
+                else
+                {
+                    bool suitsAlternate = (parentCard->getSuit() % 2) != (childCard->getSuit() % 2);
+                    bool valuesDecrease = parentCard->getValue() == childCard->getValue() + 1;
+                    if(suitsAlternate && valuesDecrease)
+                        return true;
+                }
+            }
         }
     }
 
