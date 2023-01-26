@@ -15,17 +15,30 @@
 #define STACK_MIN 0.0f
 #define STACK_MAX 0.1f
 
+enum SPCardBackColor
+{
+    SPBACK_MIN,
+    SPBACK_BLUE=SPBACK_MIN,
+    SPBACK_RED,
+    SPBACK_GREEN,
+    SPBACK_PURPLE,
+    SPBACK_MAX
+};
+
 enum SPCardSuit
 {
-    SPSUIT_CLUB,
+    SPSUIT_MIN,
+    SPSUIT_CLUB=SPSUIT_MIN,
     SPSUIT_DIAMOND,
     SPSUIT_SPADE,
-    SPSUIT_HEART
+    SPSUIT_HEART,
+    SPSUIT_MAX
 };
 
 enum SPCardValue
 {
-    SPVALUE_ACE,
+    SPVALUE_MIN,
+    SPVALUE_ACE=SPVALUE_MIN,
     SPVALUE_TWO,
     SPVALUE_THREE,
     SPVALUE_FOUR,
@@ -37,7 +50,8 @@ enum SPCardValue
     SPVALUE_TEN,
     SPVALUE_JACK,
     SPVALUE_QUEEN,
-    SPVALUE_KING
+    SPVALUE_KING,
+    SPVALUE_MAX
 };
 
 #define DRAG_THRESHOLD 5
@@ -47,6 +61,9 @@ class SPCard : public SPPilable, public ICollisionReceiver
 {
     SPCardSuit suit;
     SPCardValue value;
+    SPCardBackColor color;
+    bool faceUp = true;
+
     SPSnapValidator* validator;
 
     glm::vec2 size;
@@ -58,23 +75,23 @@ class SPCard : public SPPilable, public ICollisionReceiver
     std::map<ICollisionReceiver*, glm::vec2> overlaps;
 
 public:
-    SPCard* snappedCard = nullptr;
-
-    SPCard(glm::vec2 position, SPCardSuit suit, SPCardValue value, SPSnapValidator* validator);
+    SPCard(glm::vec2 position, SPCardSuit suit, SPCardValue value, bool faceUp, SPSnapValidator* validator);
+    ~SPCard();
 
     SPCardSuit getSuit() { return suit; }
     SPCardValue getValue() { return value; }
 
 protected:
     void settleCard(); // Settle the card in a stack
-    void snap(SPCard*);
-    void unsnap();
-    bool isInSnapChain(SPCard* other);
 
 public:
     bool containsPoint(glm::vec2 point);
     bool isTopmostAtPoint(glm::vec2 point);
     bool isTopmost();
+
+    void flip();
+    bool isFaceUp() { return faceUp; }
+    bool isFaceDown() { return !isFaceUp(); }
 
     //Entity
     void update(float deltaTime) override;

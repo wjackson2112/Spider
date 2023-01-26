@@ -25,6 +25,9 @@ public:
 
     SPPilable* getPileRoot();
     SPPilable* getPileEnd();
+    SPPilable* getPileParent() { return pileParent; }
+    SPPilable* getPileChild() { return pileChild; }
+
     void addToPile(SPPilable* pilable);
     bool isInPile(SPPilable* pilable);
     void removeFromPile();

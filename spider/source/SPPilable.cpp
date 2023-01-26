@@ -31,15 +31,31 @@ SPPilable *SPPilable::getPileEnd() {
 void SPPilable::addToPile(SPPilable *pilable)
 {
     SPPilable* pileEnd = getPileEnd();
+    SPPilable* pileRoot = getPileRoot();
 
-    pileEnd->pileChild = pilable;
-    pilable->pileParent = pileEnd;
-    pileEnd->addChild(pilable);
+    pilable->removeFromPile();
 
-    if(this == getPileRoot())
-        pilable->getTransform()->setPosition(getRootOffset());
+    if(this == pileEnd)
+    {
+        pileChild = pilable;
+        pilable->pileParent = this;
+        addChild(pilable);
+
+        SPPilable* currPilable = pilable;
+        while(currPilable != nullptr)
+        {
+            if(currPilable->getPileParent() == pileRoot)
+                currPilable->getTransform()->setPosition(getRootOffset());
+            else
+                currPilable->getTransform()->setPosition(getPileOffset());
+            currPilable = currPilable->getPileChild();
+        }
+
+    }
     else
-        pilable->getTransform()->setPosition(getPileOffset());
+    {
+        pileChild->addToPile(pilable);
+    }
 }
 
 bool SPPilable::isInPile(SPPilable *pilable)

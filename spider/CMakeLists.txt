@@ -5,7 +5,9 @@ add_executable(Spider source/SPGame.cpp
                       source/SPScene.cpp
                       source/SPCard.cpp
                       source/SPSnapValidatorFourSuits.cpp
-        source/SPPile.cpp source/SPPilable.cpp)
+                      source/SPPile.cpp
+                      source/SPPilable.cpp
+                      source/SPFrameCounterEntity.cpp)
 
 target_include_directories(Spider
                            PUBLIC

@@ -9,14 +9,19 @@
 #include "AssetManager.h"
 #include "EntityManager.h"
 #include "InputComponent.h"
-//#include "TextComponent.h"
+#include "TextComponent.h"
 #include "SpriteSheetComponent2D.h"
 #include "CollisionComponent2DAABB.h"
 
+#include "EventManager.h"
 
-SPCard::SPCard(glm::vec2 position, SPCardSuit suit, SPCardValue value, SPSnapValidator* validator)
+#define CARD_BACK_X_INDEX 13
+
+SPCard::SPCard(glm::vec2 position, SPCardSuit suit, SPCardValue value, bool faceUp, SPSnapValidator* validator)
 : suit(suit)
 , value(value)
+, color(SPBACK_BLUE)
+, faceUp(faceUp)
 , validator(validator)
 , size(49.f, 64.f)
 {
@@ -26,10 +31,14 @@ SPCard::SPCard(glm::vec2 position, SPCardSuit suit, SPCardValue value, SPSnapVal
                                                             "shaders\\sprite.frag",
                                                             nullptr,
                                                             "sprite");
-    // Deck asset is from here: https://www.codeproject.com/Articles/1187548/Video-Poker
-    Texture2D texture = AssetManager::getInstance()->loadTexture("assets\\deck.png", true, "deck");
+    // Original deck asset is from here: https://www.codeproject.com/Articles/1187548/Video-Poker
+    Texture2D texture = AssetManager::getInstance()->loadTexture("assets\\deck+backs.png", true, "deck");
 
-    auto* spriteComponent = new SpriteSheetComponent2D(shader, texture, size, glm::vec2(13, 4), value, suit);
+    SpriteSheetComponent2D* spriteComponent;
+    if(faceUp)
+        spriteComponent = new SpriteSheetComponent2D(shader, texture, size, glm::vec2(14, 4), glm::vec2(value, suit));
+    else
+        spriteComponent = new SpriteSheetComponent2D(shader, texture, size, glm::vec2(14, 4), glm::vec2(CARD_BACK_X_INDEX, color));
     addComponent(spriteComponent);
 
     auto* collisionComponent = new CollisionComponent2DAABB(this, size);
@@ -47,14 +56,21 @@ SPCard::SPCard(glm::vec2 position, SPCardSuit suit, SPCardValue value, SPSnapVal
 //                                                                nullptr,
 //                                                                text);
 //    TextFont textFont = AssetManager::getInstance()->loadTextFont("assets\\arial.ttf",
-//                                                                  "arial12", 12);
+//                                                                  "arial12", 14);
 //    auto* textComponent = new TextComponent(textShader, textFont, text);
 //
-//    textComponent->setColor(glm::vec3(.25f, .25f, .5f));
+//    textComponent->setColor(glm::vec3(1.0f, 0.0f, 0.0f));
 //    textComponent->setTransform(glm::vec3(0, -10.f, 0.001f));
 //    addComponent(textComponent);
 
-    receivesUpdates = true;
+    receivesUpdates = faceUp;
+}
+
+SPCard::~SPCard()
+{
+    pileParent = nullptr;
+    pileChild = nullptr;
+    std::cout << "Destroying" << std::endl;
 }
 
 void SPCard::update(float deltaTime)
@@ -71,8 +87,9 @@ void SPCard::update(float deltaTime)
             {
                 glm::vec2 cardPosition = this->getWorldTransform().getPosition2();
 
-                if(isTopmostAtPoint(event.position))
+                if(isTopmostAtPoint(event.position) && validator->validateGrab(this->pileParent, this))
                 {
+                    SPPilable* oldParent = this->pileParent;
                     grabPosition = event.position; // Where the grab started
                     grabOffset = glm::vec2(grabPosition.x - cardPosition.x,
                                            grabPosition.y - cardPosition.y); // The offset into the card the grab occurred
@@ -87,12 +104,15 @@ void SPCard::update(float deltaTime)
                     this->transform.setPosition(glm::vec3(this->getWorldTransform().getPosition().x,
                                                           this->getWorldTransform().getPosition().y,
                                                           STACK_MAX));
+
+                    validator->reportGrab(oldParent, this);
                 }
 
                 break;
             }
             case ACTION_RELEASE:
             {
+                EventManager::getInstance()->broadcastEvent(WON_GAME);
                 if(grabPosition != NO_GRAB && grabOffset != NO_GRAB)
                 {
                     SPPilable *bestPilable = nullptr;
@@ -108,7 +128,7 @@ void SPCard::update(float deltaTime)
                             SPPilable* newParent = newPilable->getPileEnd();
                             float newArea = it->second.x * it->second.y;
 
-                            if(newArea > bestArea && validator->validate(newParent, this))
+                            if(newArea > bestArea && validator->validateRelease(newParent, this))
                             {
                                 bestPilable = newPilable;
                                 bestArea = newArea;
@@ -123,6 +143,17 @@ void SPCard::update(float deltaTime)
                     else
                         transform.setPosition2(glm::vec2(grabPosition.x - grabOffset.x,
                                                          grabPosition.y - grabOffset.y));
+
+                    validator->reportRelease(pileParent, this);
+                }
+                else
+                {
+                    // Delay detection of a click to ensure only one card
+                    // will receive the click, otherwise the validator might
+                    // move cards away and change the "topmost" card mid-loop
+                    // causing multiple cards to be detected as clicked
+                    if(isTopmostAtPoint(event.position))
+                        validator->reportClick(this);
                 }
 
                 grabPosition = NO_GRAB;
@@ -157,6 +188,12 @@ void SPCard::update(float deltaTime)
 //    this->getComponent<TextComponent>()->setText(depth);
 
     overlaps.clear();
+
+//    static auto* collComp = getComponent<CollisionComponentBase>();
+//    if(collComp->isActive() && this != getPileEnd())
+//        collComp->deactivate();
+//    else if(!collComp->isActive() && this == getPileEnd())
+//        collComp->activate();
 }
 
 void SPCard::settleCard()
@@ -229,6 +266,17 @@ bool SPCard::isTopmost()
 
     return isTopmost;
 }
+
+void SPCard::flip()
+{
+    faceUp = !faceUp;
+    receivesUpdates = faceUp;
+
+    if(faceUp)
+        getComponent<SpriteSheetComponent2D>()->setSprite(glm::vec2(value, suit));
+    else
+        getComponent<SpriteSheetComponent2D>()->setSprite(glm::vec2(CARD_BACK_X_INDEX, color));
+};
 
 void SPCard::collisionCallback(ICollisionReceiver *collisionReceiver, glm::vec3 overlap)
 {
