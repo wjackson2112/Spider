@@ -68,9 +68,9 @@ SPCard::SPCard(glm::vec2 position, SPCardSuit suit, SPCardValue value, bool face
 
 SPCard::~SPCard()
 {
-    pileParent = nullptr;
-    pileChild = nullptr;
-    std::cout << "Destroying" << std::endl;
+    removeFromPile();
+    if(pileChild)
+        pileChild->removeFromPile();
 }
 
 void SPCard::update(float deltaTime)
@@ -112,7 +112,6 @@ void SPCard::update(float deltaTime)
             }
             case ACTION_RELEASE:
             {
-//                EventManager::getInstance()->broadcastEvent(WON_GAME);
                 if(grabPosition != NO_GRAB && grabOffset != NO_GRAB)
                 {
                     SPPilable *bestPilable = nullptr;

@@ -23,6 +23,10 @@ void SPGame::eventCallback(Event event)
             shouldStartNewGame = true;
             break;
         }
+        case WON_GAME:
+        {
+            shouldReturnToMenu = true;
+        }
         default:
             break;
     }
@@ -36,6 +40,14 @@ void SPGame::update()
         Scene* mainScene = new SPScene();
         sceneStack.pushScene(mainScene);
         shouldStartNewGame = false;
+    }
+    // TODO: This causes a crash as the entity objects are cleaned up
+    else if(shouldReturnToMenu)
+    {
+        sceneStack.clearScenes();
+        Scene* menuScene = new SPMainMenu();
+        sceneStack.pushScene(menuScene);
+        shouldReturnToMenu = false;
     }
 
     Game::update();

@@ -12,6 +12,7 @@
 class SPGame : public Game, IEventReceiver
 {
     bool shouldStartNewGame = false;
+    bool shouldReturnToMenu = false;
 
 public:
     SPGame();

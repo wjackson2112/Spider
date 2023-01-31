@@ -4,6 +4,8 @@
 
 #include "SPPile.h"
 
+#include <iostream>
+
 #include "AssetManager.h"
 #include "SpriteComponent2D.h"
 #include "CollisionComponent2DAABB.h"
@@ -32,4 +34,11 @@ SPPile::SPPile(glm::vec2 position, glm::vec3 inRootOffset, glm::vec3 inPileOffse
     addComponent(collisionComponent);
 
     receivesUpdates = true;
+}
+
+SPPile::~SPPile()
+{
+    removeFromPile();
+    if(pileChild)
+        pileChild->removeFromPile();
 }

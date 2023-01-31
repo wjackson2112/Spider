@@ -21,8 +21,7 @@ public:
     bool incrementing = false;
 
     SPPile(glm::vec2 position, glm::vec3 rootOffset, glm::vec3 pileOffset, bool incrementing, SPSnapValidator* validator);
-
-
+    ~SPPile();
 };
 
 #endif //SP_PILE_H
