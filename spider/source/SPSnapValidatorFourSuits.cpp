@@ -105,6 +105,10 @@ void SPSnapValidatorFourSuits::reportClick(SPPilable* pilable)
     if(pilable->getPileRoot() == deck)
     {
         for(auto* pile : playPiles)
+            if(!pile->getPileChild())
+                return;
+
+        for(auto* pile : playPiles)
         {
             SPCard* card = dynamic_cast<SPCard*>(deck->getPileEnd());
             pile->addToPile(card);

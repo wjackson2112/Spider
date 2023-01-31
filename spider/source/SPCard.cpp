@@ -112,7 +112,7 @@ void SPCard::update(float deltaTime)
             }
             case ACTION_RELEASE:
             {
-                EventManager::getInstance()->broadcastEvent(WON_GAME);
+//                EventManager::getInstance()->broadcastEvent(WON_GAME);
                 if(grabPosition != NO_GRAB && grabOffset != NO_GRAB)
                 {
                     SPPilable *bestPilable = nullptr;
