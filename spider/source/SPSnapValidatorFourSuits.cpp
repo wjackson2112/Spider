@@ -11,6 +11,54 @@
 #include "EntityManager.h"
 #include "EventManager.h"
 
+#include "InputManager.h"
+
+SPSnapValidatorFourSuits::SPSnapValidatorFourSuits()
+{
+    // TODO: Just keyboard input for now, move the mouse input stuff from the card over here eventually
+    InputConfig config;
+    config.keys = {KEY_D, KEY_Z};
+    InputManager::getInstance()->registerReceiver(this, config);
+}
+
+SPSnapValidatorFourSuits::~SPSnapValidatorFourSuits()
+{
+    InputManager::getInstance()->deregisterReceiver(this);
+}
+
+void SPSnapValidatorFourSuits::deal()
+{
+    for(auto* pile : playPiles)
+        if(!pile->getPileChild())
+            return;
+
+    for(auto* pile : playPiles)
+    {
+        SPCard* card = dynamic_cast<SPCard*>(deck->getPileEnd());
+        pile->addToPile(card);
+        card->flip();
+    }
+
+    deck->getPileEnd()->receivesUpdates = true;
+    moveList.push_back(MoveEntry(nullptr, nullptr));
+}
+
+void SPSnapValidatorFourSuits::undoDeal()
+{
+//    for(auto* pile : playPiles)
+    for(std::vector<SPPile*>::reverse_iterator iter = playPiles.rbegin(); iter != playPiles.rend(); iter++)
+    {
+        SPPile* pile = *iter;
+        SPCard* card = dynamic_cast<SPCard*>(pile->getPileEnd());
+        card->removeFromPile();
+        deck->addToPile(card);
+        card->flip();
+        deck->getPileEnd()->receivesUpdates = false;
+    }
+
+    deck->getPileEnd()->receivesUpdates = true;
+}
+
 void SPSnapValidatorFourSuits::initialSetup(Scene *scene)
 {
     EntityManager* entityManager = EntityManager::getInstance();
@@ -104,18 +152,7 @@ void SPSnapValidatorFourSuits::reportClick(SPPilable* pilable)
 {
     if(pilable->getPileRoot() == deck)
     {
-        for(auto* pile : playPiles)
-            if(!pile->getPileChild())
-                return;
-
-        for(auto* pile : playPiles)
-        {
-            SPCard* card = dynamic_cast<SPCard*>(deck->getPileEnd());
-            pile->addToPile(card);
-            card->flip();
-        }
-
-        deck->getPileEnd()->receivesUpdates = true;
+        deal();
     }
 }
 
@@ -158,7 +195,9 @@ bool SPSnapValidatorFourSuits::validateGrab(SPPilable *parent, SPPilable *child)
 
 void SPSnapValidatorFourSuits::reportGrab(SPPilable *parent, SPPilable *child)
 {
-    oldParent = parent;
+//    oldParent = parent;
+
+    moveList.push_back(MoveEntry(parent, child));
 }
 
 bool SPSnapValidatorFourSuits::validateRelease(SPPilable* parent, SPPilable* child)
@@ -208,11 +247,21 @@ bool SPSnapValidatorFourSuits::validateRelease(SPPilable* parent, SPPilable* chi
 void SPSnapValidatorFourSuits::reportRelease(SPPilable *parent, SPPilable *child)
 {
     // Flip face down cards in play when their child is removed
-    if(SPCard* oldParentCard = dynamic_cast<SPCard*>(oldParent))
+    if(SPCard* oldParentCard = dynamic_cast<SPCard*>(moveList.back().parent))
     {
-        if(parent != oldParent && oldParentCard->isFaceDown())
+        // Check that the player didn't put the card back where it came from
+        if(parent != oldParentCard && oldParentCard->isFaceDown())
         {
             oldParentCard->flip();
+        }
+
+        if(moveList.back().child && moveList.back().parent &&
+           moveList.back().child == child &&
+           moveList.back().parent == parent)
+        {
+            // Forget the previous move, player put the card back
+            moveList.pop_back();
+            return;
         }
     }
 
@@ -268,6 +317,12 @@ void SPSnapValidatorFourSuits::reportRelease(SPPilable *parent, SPPilable *child
             if(parentCard->isFaceDown())
                 parentCard->flip();
 
+        moveList.push_back(MoveEntry(topCard->getPileParent(), topCard));
+
+        int currOutPile = 0;
+        while(outPiles[currOutPile]->getPileChild())
+            currOutPile++;
+
         outPiles[currOutPile]->addToPile(topCard);
 
         // Stop receiving updates for cards out of play
@@ -283,5 +338,63 @@ void SPSnapValidatorFourSuits::reportRelease(SPPilable *parent, SPPilable *child
         // All piles filled, you win!
         if(currOutPile >= 8)
             EventManager::getInstance()->broadcastEvent(WON_GAME);
+    }
+}
+
+void SPSnapValidatorFourSuits::undo()
+{
+    if(moveList.size() <= 0)
+        return;
+
+
+    MoveEntry currentEntry = moveList.back(); moveList.pop_back();
+
+    // If both are nullptr, this move was a deal
+    if(currentEntry.parent == nullptr && currentEntry.child == nullptr)
+    {
+        undoDeal();
+        return;
+    }
+
+    bool isSuitMove = false;
+    if(currentEntry.child->getPileParent())
+    {
+        // Undo'ing a suited stack to the foundation
+        for(SPPile* outPile : outPiles)
+            if(currentEntry.child->getPileParent() == outPile)
+                isSuitMove = true;
+        currentEntry.child->removeFromPile();
+    }
+
+    currentEntry.parent->addToPile(currentEntry.child);
+
+    if(SPCard* parentCard = dynamic_cast<SPCard*>(currentEntry.parent))
+        if(currentEntry.parentFaceUp != parentCard->isFaceUp())
+            parentCard->flip();
+
+    // Ensure all moved cards are receiving updates
+    SPCard* currCard = dynamic_cast<SPCard*>(currentEntry.child);
+    while(currCard)
+    {
+        currCard->receivesUpdates = true;
+        currCard = dynamic_cast<SPCard*>(currCard->getPileChild());
+    }
+
+    if(isSuitMove)
+        undo();
+}
+
+void SPSnapValidatorFourSuits::keyInputCallback(Key key, int scancode, Action action, Modifier mods)
+{
+    switch(key)
+    {
+        case KEY_D:
+            if(action == ACTION_PRESS)
+                deal();
+        case KEY_Z:
+            if(action == ACTION_PRESS && mods == MOD_CONTROL)
+                undo();
+        default:
+            return;
     }
 }
