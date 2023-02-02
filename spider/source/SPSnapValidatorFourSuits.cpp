@@ -12,18 +12,19 @@
 #include "EventManager.h"
 
 #include "InputManager.h"
+#include "InputComponent.h"
 
 SPSnapValidatorFourSuits::SPSnapValidatorFourSuits()
 {
-    // TODO: Just keyboard input for now, move the mouse input stuff from the card over here eventually
-    InputConfig config;
+    InputConfig config = InputConfig();
+    config.mouseButtons.push_back(MOUSE_BUTTON_1);
     config.keys = {KEY_D, KEY_Z};
-    InputManager::getInstance()->registerReceiver(this, config);
-}
+    config.receivesMousePosition = true;
 
-SPSnapValidatorFourSuits::~SPSnapValidatorFourSuits()
-{
-    InputManager::getInstance()->deregisterReceiver(this);
+    auto* inputComponent = new InputComponent(config);
+    addComponent(inputComponent);
+
+    receivesUpdates = true;
 }
 
 void SPSnapValidatorFourSuits::deal()
@@ -384,17 +385,36 @@ void SPSnapValidatorFourSuits::undo()
         undo();
 }
 
-void SPSnapValidatorFourSuits::keyInputCallback(Key key, int scancode, Action action, Modifier mods)
+void SPSnapValidatorFourSuits::update(float deltaTime)
 {
-    switch(key)
+    Entity::update(deltaTime);
+
+    auto* inputComponent = getComponent<InputComponent>();
+
+    while(inputComponent->hasEvents())
     {
-        case KEY_D:
-            if(action == ACTION_PRESS)
-                deal();
-        case KEY_Z:
-            if(action == ACTION_PRESS && mods == MOD_CONTROL)
-                undo();
-        default:
-            return;
+        InputEvent event = inputComponent->dequeueEvent();
+        if(event.isKeyEvent())
+        {
+            switch(event.key)
+            {
+                case KEY_D:
+                    if(event.action == ACTION_PRESS)
+                        deal();
+                case KEY_Z:
+                    if(event.action == ACTION_PRESS && event.mods == MOD_CONTROL)
+                        undo();
+                default:
+                    return;
+            }
+        }
+        else
+        {
+            switch(event.button)
+            {
+                default:
+                    return;
+            }
+        }
     }
 }

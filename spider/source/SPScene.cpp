@@ -17,11 +17,12 @@
 SPScene::SPScene()
 {
     EntityManager* entityManager = EntityManager::getInstance();
-    SPSnapValidatorFourSuits* validator = new SPSnapValidatorFourSuits();
     entityManager->registerEntity(this, new CameraEntity2D());
     entityManager->registerEntity(this, new SPBackground());
 
     entityManager->registerEntity(this, new SPFrameCounterEntity());
+    auto validator = new SPSnapValidatorFourSuits();
 
+    entityManager->registerEntity(this, validator);
     validator->initialSetup(this);
 }

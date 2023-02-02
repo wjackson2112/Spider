@@ -79,9 +79,9 @@ void SPCard::update(float deltaTime)
 
     auto* inputComponent = getComponent<InputComponent>();
 
-    while(inputComponent->hasMouseEvents())
+    while(inputComponent->hasEvents())
     {
-        MouseEvent event = inputComponent->dequeueMouseEvent();
+        InputEvent event = inputComponent->dequeueEvent();
         switch(event.action) {
             case ACTION_PRESS:
             {

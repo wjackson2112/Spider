@@ -7,6 +7,7 @@
 
 #include <vector>
 
+#include "Entity.h"
 #include "IInputReceiver.h"
 #include "SPSnapValidator.h"
 #include "SPPile.h"
@@ -28,7 +29,7 @@ struct MoveEntry
     }
 };
 
-class SPSnapValidatorFourSuits : public SPSnapValidator, public IInputReceiver
+class SPSnapValidatorFourSuits : public SPSnapValidator, public Entity
 {
     std::vector<MoveEntry> moveList;
 
@@ -41,13 +42,14 @@ class SPSnapValidatorFourSuits : public SPSnapValidator, public IInputReceiver
 
 public:
     SPSnapValidatorFourSuits();
-    ~SPSnapValidatorFourSuits();
 
     void undo();
 
 private:
     void deal();
     void undoDeal();
+
+    void update(float deltaTime);
 
 public:
     //SPSnapValidator
@@ -60,10 +62,6 @@ public:
 
     bool validateRelease(SPPilable* parent, SPPilable* child);
     void reportRelease(SPPilable* parent, SPPilable* child);
-
-    //IInputReceiver
-    void mouseInputCallback(double xpos, double ypos, MouseButton button, Action action, Modifier mods) {};
-    void keyInputCallback(Key key, int scancode, Action action, Modifier mods);
 };
 
 #endif //SP_SNAP_VALIDATOR_FOUR_SUITS_H
