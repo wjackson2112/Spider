@@ -11,7 +11,7 @@
 #include "Entity.h"
 #include "ICollisionReceiver.h"
 
-class SPPile : public SPPilable, public ICollisionReceiver
+class SPPile : public SPPilable//, public ICollisionReceiver
 {
 protected:
     glm::vec2 size;
@@ -19,6 +19,9 @@ protected:
 
 public:
     bool incrementing = false;
+
+    //SPPilable
+    glm::vec2 getSize() {return size;}
 
     SPPile(glm::vec2 position, glm::vec3 rootOffset, glm::vec3 pileOffset, bool incrementing, SPSnapValidator* validator);
     ~SPPile();

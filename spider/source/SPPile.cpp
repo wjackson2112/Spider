@@ -30,9 +30,6 @@ SPPile::SPPile(glm::vec2 position, glm::vec3 inRootOffset, glm::vec3 inPileOffse
     auto* spriteComponent = new SpriteComponent2D(shader, texture, size);
     addComponent(spriteComponent);
 
-    auto* collisionComponent = new CollisionComponent2DAABB(this, size);
-    addComponent(collisionComponent);
-
     receivesUpdates = true;
 }
 

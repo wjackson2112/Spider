@@ -14,12 +14,14 @@
 #include "InputManager.h"
 #include "InputComponent.h"
 
+
+
 SPSnapValidatorFourSuits::SPSnapValidatorFourSuits()
 {
     InputConfig config = InputConfig();
     config.mouseButtons.push_back(MOUSE_BUTTON_1);
-    config.keys = {KEY_D, KEY_Z};
     config.receivesMousePosition = true;
+    config.keys = {KEY_D, KEY_Z};
 
     auto* inputComponent = new InputComponent(config);
     addComponent(inputComponent);
@@ -197,6 +199,16 @@ bool SPSnapValidatorFourSuits::validateGrab(SPPilable *parent, SPPilable *child)
 void SPSnapValidatorFourSuits::reportGrab(SPPilable *parent, SPPilable *child)
 {
 //    oldParent = parent;
+
+    if(parent)
+    {
+        child->removeFromPile();
+    }
+
+    // Pop the card to the front
+    child->getTransform()->setPosition(glm::vec3(child->getWorldTransform().getPosition().x,
+                                                 child->getWorldTransform().getPosition().y,
+                                                 STACK_MAX));
 
     moveList.push_back(MoveEntry(parent, child));
 }
@@ -385,9 +397,31 @@ void SPSnapValidatorFourSuits::undo()
         undo();
 }
 
+SPCard* SPSnapValidatorFourSuits::getTopmostCardAtPosition(glm::vec2 position)
+{
+    EntityManager* entityManager = EntityManager::getInstance();
+    std::vector<Entity*> entities = entityManager->getEntitiesInScene(entityManager->getSceneForEntity(this));
+
+    for(Entity* entity : entities)
+    {
+        SPCard* card = dynamic_cast<SPCard*>(entity);
+        if(!card)
+            continue;
+
+        if(card->isTopmostAtPoint(position))
+            return card;
+    }
+
+    return nullptr;
+}
+
 void SPSnapValidatorFourSuits::update(float deltaTime)
 {
     Entity::update(deltaTime);
+
+    static glm::vec2 grabStartPosition = NO_GRAB;
+    static glm::vec2 grabOffset = NO_GRAB;
+    static SPCard *grabbedCard = nullptr;
 
     auto* inputComponent = getComponent<InputComponent>();
 
@@ -408,10 +442,72 @@ void SPSnapValidatorFourSuits::update(float deltaTime)
                     return;
             }
         }
-        else
+        else if(event.isMouseEvent())
         {
-            switch(event.button)
+            switch(event.action)
             {
+                case ACTION_PRESS:
+                {
+                    grabbedCard = getTopmostCardAtPosition(event.position);
+                    if (grabbedCard && validateGrab(grabbedCard->getPileParent(), grabbedCard))
+                    {
+                        glm::vec2 cardPosition = grabbedCard->getWorldTransform().getPosition2();
+                        grabStartPosition = event.position;
+                        grabOffset = glm::vec2(event.position.x - cardPosition.x,
+                                               event.position.y - cardPosition.y);
+
+                        reportGrab(grabbedCard->getPileParent(), grabbedCard);
+                    }
+                    else
+                    {
+                        grabbedCard = nullptr;
+                    }
+                    break;
+                }
+                case ACTION_RELEASE:
+                {
+                    if(grabbedCard)
+                    {
+                        SPPilable* bestPilable = grabbedCard->getClosestOverlap();
+                        if(bestPilable)
+                        {
+                            bestPilable->addToPile(grabbedCard);
+                            reportRelease(grabbedCard->getPileParent(), grabbedCard);
+                        }
+                        else
+                        {
+                            undo();
+                        }
+                    }
+                    else
+                    {
+                        if(SPPilable* clickedPilable = getTopmostCardAtPosition(event.position))
+                            reportClick(clickedPilable);
+                    }
+
+                    grabbedCard = nullptr;
+                    break;
+                }
+                case ACTION_NONE:
+                {
+                    // We don't care where the mouse is if the card isn't grabbed
+                    if (grabbedCard == nullptr)
+                        break;
+
+                    // Grabs are done only with mouse 1
+                    if (InputManager::getInstance()->getLastMouseState(MOUSE_BUTTON_1) != ACTION_PRESS)
+                        break;
+
+                    // A move while the button is pressed is a "drag"
+                    // check if we've moved past our minimum drag threshold, then move the card
+
+                    glm::vec2 difference = event.position - grabStartPosition;
+                    float differenceLen = glm::length(event.position - grabStartPosition);
+                    if (differenceLen > DRAG_THRESHOLD)
+                        grabbedCard->getTransform()->setPosition2(glm::vec2(event.position.x - grabOffset.x, event.position.y - grabOffset.y));
+
+                    break;
+                }
                 default:
                     return;
             }

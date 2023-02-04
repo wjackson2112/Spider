@@ -14,6 +14,9 @@
 
 #include <random>
 
+#define NO_GRAB glm::vec2(-1, -1)
+#define DRAG_THRESHOLD 5
+
 struct MoveEntry
 {
     SPPilable* child;
@@ -49,6 +52,7 @@ private:
     void deal();
     void undoDeal();
 
+    SPCard* getTopmostCardAtPosition(glm::vec2 position);
     void update(float deltaTime);
 
 public:

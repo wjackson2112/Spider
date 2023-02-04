@@ -54,10 +54,7 @@ enum SPCardValue
     SPVALUE_MAX
 };
 
-#define DRAG_THRESHOLD 5
-#define NO_GRAB glm::vec2(-1, -1)
-
-class SPCard : public SPPilable, public ICollisionReceiver
+class SPCard : public SPPilable//, public ICollisionReceiver
 {
     SPCardSuit suit;
     SPCardValue value;
@@ -67,8 +64,6 @@ class SPCard : public SPPilable, public ICollisionReceiver
     SPSnapValidator* validator;
 
     glm::vec2 size;
-    glm::vec2 grabPosition = NO_GRAB;
-    glm::vec2 grabOffset = NO_GRAB;
 
     SPPilable* prevParent = nullptr;
 
@@ -85,6 +80,7 @@ protected:
     void settleCard(); // Settle the card in a stack
 
 public:
+    SPPilable* getClosestOverlap();
     bool containsPoint(glm::vec2 point);
     bool isTopmostAtPoint(glm::vec2 point);
     bool isTopmost();
@@ -93,11 +89,8 @@ public:
     bool isFaceUp() { return faceUp; }
     bool isFaceDown() { return !isFaceUp(); }
 
-    //Entity
-    void update(float deltaTime) override;
-
-    //ICollisionReceiver
-    void collisionCallback(ICollisionReceiver* collisionReceiver, glm::vec3 overlap);
+    //SPPilable
+    glm::vec2 getSize() {return size;}
 };
 
 #endif //SP_CARD_H

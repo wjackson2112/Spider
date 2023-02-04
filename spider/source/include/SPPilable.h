@@ -32,6 +32,7 @@ public:
     bool isInPile(SPPilable* pilable);
     void removeFromPile();
     virtual ~SPPilable() = default;
+    virtual glm::vec2 getSize() { return glm::vec2(0,0); };
 };
 
 

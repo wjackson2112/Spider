@@ -41,29 +41,11 @@ SPCard::SPCard(glm::vec2 position, SPCardSuit suit, SPCardValue value, bool face
         spriteComponent = new SpriteSheetComponent2D(shader, texture, size, glm::vec2(14, 4), glm::vec2(CARD_BACK_X_INDEX, color));
     addComponent(spriteComponent);
 
-    auto* collisionComponent = new CollisionComponent2DAABB(this, size);
-    addComponent(collisionComponent);
-
     InputConfig config = InputConfig();
     config.mouseButtons.push_back(MOUSE_BUTTON_1);
     config.receivesMousePosition = true;
     auto* inputComponent = new InputComponent(config);
     addComponent(inputComponent);
-
-//    std::string text = "0.0";
-//    Shader textShader = AssetManager::getInstance()->loadShader("shaders\\text.vert",
-//                                                                "shaders\\text.frag",
-//                                                                nullptr,
-//                                                                text);
-//    TextFont textFont = AssetManager::getInstance()->loadTextFont("assets\\arial.ttf",
-//                                                                  "arial12", 14);
-//    auto* textComponent = new TextComponent(textShader, textFont, text);
-//
-//    textComponent->setColor(glm::vec3(1.0f, 0.0f, 0.0f));
-//    textComponent->setTransform(glm::vec3(0, -10.f, 0.001f));
-//    addComponent(textComponent);
-
-    receivesUpdates = faceUp;
 }
 
 SPCard::~SPCard()
@@ -73,150 +55,72 @@ SPCard::~SPCard()
         pileChild->removeFromPile();
 }
 
-void SPCard::update(float deltaTime)
+SPPilable* SPCard::getClosestOverlap()
 {
-    Entity::update(deltaTime);
+    SPPilable *bestPilable = nullptr;
+    float bestArea = 0.0f;
 
-    auto* inputComponent = getComponent<InputComponent>();
-
-    while(inputComponent->hasEvents())
+    EntityManager* entityManager = EntityManager::getInstance();
+    std::vector<Entity*> entities = entityManager->getEntitiesInScene(entityManager->getSceneForEntity(this));
+    for(Entity* entity : entities)
     {
-        InputEvent event = inputComponent->dequeueEvent();
-        switch(event.action) {
-            case ACTION_PRESS:
-            {
-                glm::vec2 cardPosition = this->getWorldTransform().getPosition2();
-
-                if(isTopmostAtPoint(event.position) && validator->validateGrab(this->pileParent, this))
-                {
-                    SPPilable* oldParent = this->pileParent;
-                    grabPosition = event.position; // Where the grab started
-                    grabOffset = glm::vec2(grabPosition.x - cardPosition.x,
-                                           grabPosition.y - cardPosition.y); // The offset into the card the grab occurred
-
-                    if(parent)
-                    {
-                        prevParent = dynamic_cast<SPPilable*>(parent);
-                        removeFromPile();
-                    }
-
-                    // Pop the card to the front
-                    this->transform.setPosition(glm::vec3(this->getWorldTransform().getPosition().x,
-                                                          this->getWorldTransform().getPosition().y,
-                                                          STACK_MAX));
-
-                    validator->reportGrab(oldParent, this);
-                }
-
-                break;
-            }
-            case ACTION_RELEASE:
-            {
-                if(grabPosition != NO_GRAB && grabOffset != NO_GRAB)
-                {
-                    SPPilable *bestPilable = nullptr;
-                    float bestArea = 0.0f;
-                    for (auto it = overlaps.begin(); it != overlaps.end(); it++)
-                    {
-                        if(SPPilable* newPilable = dynamic_cast<SPPilable*>(it->first))
-                        {
-                            // We're already piled with this card
-                            if(isInPile(newPilable))
-                                continue;
-
-                            SPPilable* newParent = newPilable->getPileEnd();
-                            float newArea = it->second.x * it->second.y;
-
-                            if(newArea > bestArea && validator->validateRelease(newParent, this))
-                            {
-                                bestPilable = newPilable;
-                                bestArea = newArea;
-                            }
-                        }
-                    }
-
-                    if (bestPilable)
-                        bestPilable->addToPile(this);
-                    else if(prevParent)
-                        prevParent->addToPile(this);
-                    else
-                        transform.setPosition2(glm::vec2(grabPosition.x - grabOffset.x,
-                                                         grabPosition.y - grabOffset.y));
-
-                    validator->reportRelease(pileParent, this);
-                }
-                else
-                {
-                    // Delay detection of a click to ensure only one card
-                    // will receive the click, otherwise the validator might
-                    // move cards away and change the "topmost" card mid-loop
-                    // causing multiple cards to be detected as clicked
-                    if(isTopmostAtPoint(event.position))
-                        validator->reportClick(this);
-                }
-
-                grabPosition = NO_GRAB;
-                grabOffset = NO_GRAB;
-
-                break;
-            }
-            case ACTION_NONE: // Action none means it's a mouse move
-                // We don't care where the mouse is if the card isn't grabbed
-                if(grabPosition == NO_GRAB || grabOffset == NO_GRAB)
-                    break;
-
-                // Grabs are done only with mouse 1
-                if(InputManager::getInstance()->getLastMouseState(MOUSE_BUTTON_1) != ACTION_PRESS)
-                    break;
-
-                // A move while the button is pressed is a "drag"
-                // check if we've moved past our minimum drag threshold, then move the card
-                if(glm::length(glm::vec2(event.position.x, event.position.y) - grabPosition) > DRAG_THRESHOLD)
-                    this->getTransform()->setPosition2(glm::vec2(event.position.x - grabOffset.x, event.position.y - grabOffset.y));
-
-                break;
-            default:
-                break;
-        }
-    }
-
-    if(grabPosition == NO_GRAB && grabOffset == NO_GRAB)
-        settleCard();
-
-//    std::string depth = std::to_string(this->getWorldTransform().getPosition().z);
-//    this->getComponent<TextComponent>()->setText(depth);
-
-    overlaps.clear();
-
-//    static auto* collComp = getComponent<CollisionComponentBase>();
-//    if(collComp->isActive() && this != getPileEnd())
-//        collComp->deactivate();
-//    else if(!collComp->isActive() && this == getPileEnd())
-//        collComp->activate();
-}
-
-void SPCard::settleCard()
-{
-    // Cards with a parent are snapped and follow the depth of the parent
-    if(parent)
-        return;
-
-    float newZ = STACK_OFFSET;
-    for (auto it = overlaps.begin(); it != overlaps.end(); it++)
-    {
-        if (SPCard *otherCard = dynamic_cast<SPCard *>(it->first))
+        if(SPPilable* newPilable = dynamic_cast<SPPilable*>(entity))
         {
-            if (otherCard->getWorldTransform().getPosition().z <= this->getWorldTransform().getPosition().z &&
-                otherCard->getWorldTransform().getPosition().z >= newZ)
-            {
-                newZ = otherCard->getWorldTransform().getPosition().z + STACK_OFFSET;
+            // We're already piled with this card
+            if(isInPile(newPilable))
+                continue;
+
+            SPPilable* newParent = newPilable->getPileEnd();
+
+            glm::vec2 thisPosition = getWorldTransform().getPosition();
+            glm::vec2 thisSize = this->size;
+            glm::vec2 otherPosition = newPilable->getWorldTransform().getPosition();
+            glm::vec2 otherSize = newPilable->getSize();
+
+            bool xCollided = thisPosition.x + thisSize.x > otherPosition.x &&
+                             otherPosition.x + otherSize.x > thisPosition.x;
+
+            bool yCollided = thisPosition.y + thisSize.y > otherPosition.y &&
+                             otherPosition.y + otherSize.y > thisPosition.y;
+
+            if(!xCollided || !yCollided)
+                continue;
+
+            glm::vec3 start = glm::vec3(0.0f, 0.0f, 0.0f);
+            glm::vec3 end = glm::vec3(0.0f, 0.0f, 0.0f);
+
+            if (thisPosition.x < otherPosition.x)
+                start.x = otherPosition.x;
+            else
+                start.x = thisPosition.x;
+
+            if (thisPosition.x + thisSize.x < otherPosition.x + otherSize.x)
+                end.x = thisPosition.x + thisSize.x;
+            else
+                end.x = otherPosition.x + otherSize.x;
+
+            if (thisPosition.y < otherPosition.y)
+                start.y = otherPosition.y;
+            else
+                start.y = thisPosition.y;
+
+            if (thisPosition.y + thisSize.y < otherPosition.y + otherSize.y)
+                end.y = thisPosition.y + thisSize.y;
+            else
+                end.y = otherPosition.y + otherSize.y;
+
+            glm::vec3 overlap = (end - start);
+
+            float newArea = overlap.x * overlap.y;
+
+            if (newArea > bestArea && validator->validateRelease(newParent, this)) {
+                bestPilable = newPilable;
+                bestArea = newArea;
             }
         }
     }
 
-    this->transform.setPosition(glm::vec3(this->transform.getPosition().x,
-                                          this->transform.getPosition().y,
-                                          newZ));
+    return bestPilable;
 }
 
 bool SPCard::containsPoint(glm::vec2 point)
@@ -231,54 +135,30 @@ bool SPCard::isTopmostAtPoint(glm::vec2 point)
     if(!containsPoint(point))
         return false;
 
-    bool isTopmost = true;
-    for (auto it = overlaps.begin(); it != overlaps.end(); it++)
+    EntityManager* entityManager = EntityManager::getInstance();
+    std::vector<Entity*> entities = entityManager->getEntitiesInScene(entityManager->getSceneForEntity(this));
+    for(Entity* entity : entities)
     {
-        if (SPCard *otherCard = dynamic_cast<SPCard *>(it->first))
+        if (SPCard *otherCard = dynamic_cast<SPCard *>(entity))
         {
             if (otherCard->containsPoint(point) &&
                 otherCard->getWorldTransform().getPosition().z > getWorldTransform().getPosition().z)
             {
-                isTopmost = false;
-                break;
+                return false;
             }
         }
     }
 
-    return isTopmost;
-}
-
-bool SPCard::isTopmost()
-{
-    bool isTopmost = true;
-    for (auto it = overlaps.begin(); it != overlaps.end(); it++)
-    {
-        if (SPCard *otherCard = dynamic_cast<SPCard *>(it->first))
-        {
-            if (otherCard->getWorldTransform().getPosition().z > getWorldTransform().getPosition().z)
-            {
-                isTopmost = false;
-                break;
-            }
-        }
-    }
-
-    return isTopmost;
+    return true;
 }
 
 void SPCard::flip()
 {
     faceUp = !faceUp;
-    receivesUpdates = faceUp;
 
     if(faceUp)
         getComponent<SpriteSheetComponent2D>()->setSprite(glm::vec2(value, suit));
     else
         getComponent<SpriteSheetComponent2D>()->setSprite(glm::vec2(CARD_BACK_X_INDEX, color));
 };
-
-void SPCard::collisionCallback(ICollisionReceiver *collisionReceiver, glm::vec3 overlap)
-{
-    overlaps[collisionReceiver] = overlap;
-}
 
