@@ -66,6 +66,10 @@ public:
 
     bool validateRelease(SPPilable* parent, SPPilable* child);
     void reportRelease(SPPilable* parent, SPPilable* child);
+
+    void reportAnimationComplete(SPPilable* pilable);
+
+    void handleCompleteSuitIfFound(SPPilable *pilable);
 };
 
 #endif //SP_SNAP_VALIDATOR_FOUR_SUITS_H

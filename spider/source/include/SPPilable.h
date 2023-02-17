@@ -28,10 +28,12 @@ public:
     SPPilable* getPileParent() { return pileParent; }
     SPPilable* getPileChild() { return pileChild; }
 
-    void addToPile(SPPilable* pilable);
+    void addToPile(SPPilable* pilable, bool snap = false);
     bool isInPile(SPPilable* pilable);
     void removeFromPile();
     virtual ~SPPilable() = default;
+    virtual void moveTo(glm::vec3 target);
+    virtual void snapTo(glm::vec3 target);
     virtual glm::vec2 getSize() { return glm::vec2(0,0); };
 };
 

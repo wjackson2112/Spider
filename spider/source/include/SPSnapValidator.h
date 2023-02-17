@@ -20,6 +20,8 @@ public:
 
     virtual bool validateRelease(SPPilable* parent, SPPilable* child) { return true; };
     virtual void reportRelease(SPPilable* parent, SPPilable* child) {};
+
+    virtual void reportAnimationComplete(SPPilable* pilable) {};
 };
 
 #endif //SP_SNAP_VALIDATOR_H

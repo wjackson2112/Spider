@@ -9,9 +9,11 @@
 #include "AssetManager.h"
 #include "EntityManager.h"
 #include "InputComponent.h"
-#include "TextComponent.h"
+//#include "TextComponent.h"
 #include "SpriteSheetComponent2D.h"
 #include "CollisionComponent2DAABB.h"
+#include "AnimationComponent.h"
+#include "TransformAnimation.h"
 
 #include "EventManager.h"
 
@@ -46,6 +48,11 @@ SPCard::SPCard(glm::vec2 position, SPCardSuit suit, SPCardValue value, bool face
     config.receivesMousePosition = true;
     auto* inputComponent = new InputComponent(config);
     addComponent(inputComponent);
+
+    auto* animationComponent = new AnimationComponent();
+    addComponent(animationComponent);
+
+    receivesUpdates = faceUp;
 }
 
 SPCard::~SPCard()
@@ -113,6 +120,7 @@ SPPilable* SPCard::getClosestOverlap()
 
             float newArea = overlap.x * overlap.y;
 
+            // TODO: This is gross and shouldn't be here
             if (newArea > bestArea && validator->validateRelease(newParent, this)) {
                 bestPilable = newPilable;
                 bestArea = newArea;
@@ -155,6 +163,7 @@ bool SPCard::isTopmostAtPoint(glm::vec2 point)
 void SPCard::flip()
 {
     faceUp = !faceUp;
+    receivesUpdates = faceUp;
 
     if(faceUp)
         getComponent<SpriteSheetComponent2D>()->setSprite(glm::vec2(value, suit));
@@ -162,3 +171,24 @@ void SPCard::flip()
         getComponent<SpriteSheetComponent2D>()->setSprite(glm::vec2(CARD_BACK_X_INDEX, color));
 };
 
+void SPCard::moveTo(glm::vec3 target)
+{
+    glm::vec3 translation = target - transform.getPosition();
+
+    auto* animComp = getComponent<AnimationComponent>();
+
+    // Determine where the card is already going, so we can just add enough animation
+    // to get to the new target without overshooting
+    for(auto transformAnim : animComp->getAnimations<TransformAnimation>())
+        translation -= transformAnim.getRemainingTranslation();
+
+    Transform targetTransform = this->transform;
+    targetTransform.translate(translation);
+
+    animComp->addAndStart(new TransformAnimation(&transform, targetTransform, 0.3f, this));
+}
+
+void SPCard::animationComplete()
+{
+    validator->reportAnimationComplete(this);
+}

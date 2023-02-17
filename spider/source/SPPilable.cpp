@@ -28,7 +28,7 @@ SPPilable *SPPilable::getPileEnd() {
     return pileChild->getPileEnd();
 }
 
-void SPPilable::addToPile(SPPilable *pilable)
+void SPPilable::addToPile(SPPilable *pilable, bool snap)
 {
     SPPilable* pileEnd = getPileEnd();
     SPPilable* pileRoot = getPileRoot();
@@ -37,24 +37,48 @@ void SPPilable::addToPile(SPPilable *pilable)
 
     if(this == pileEnd)
     {
+        glm::vec3 currWorldPosition = pilable->getWorldTransform().getPosition();
         pileChild = pilable;
         pilable->pileParent = this;
         addChild(pilable);
 
-        SPPilable* currPilable = pilable;
-        while(currPilable != nullptr)
+        // Attach to the pile without moving the card
+        glm::vec3 attachedWorldPosition = pilable->getWorldTransform().getPosition();
+        glm::vec3 worldPositionDifference = attachedWorldPosition - currWorldPosition;
+        pilable->getTransform()->translate(-worldPositionDifference);
+
+        // Move the card to the target location
+        if(pilable->getPileParent() == pileRoot)
         {
-            if(currPilable->getPileParent() == pileRoot)
-                currPilable->getTransform()->setPosition(getRootOffset());
+            if(snap)
+                pilable->snapTo(getRootOffset());
             else
-                currPilable->getTransform()->setPosition(getPileOffset());
-            currPilable = currPilable->getPileChild();
+                pilable->moveTo(getRootOffset());
+        }
+        else
+        {
+            if(snap)
+                pilable->snapTo(getPileOffset());
+            else
+                pilable->moveTo(getPileOffset());
         }
 
+        SPPilable* currPilable = pilable->getPileChild();
+        while(currPilable != nullptr)
+        {
+
+            // Move the card to the target location
+            if(currPilable->getPileParent() == pileRoot)
+                currPilable->moveTo(getRootOffset());
+            else
+                currPilable->moveTo(getPileOffset());
+
+            currPilable = currPilable->getPileChild();
+        }
     }
     else
     {
-        pileChild->addToPile(pilable);
+        pileChild->addToPile(pilable, snap);
     }
 }
 
@@ -81,4 +105,14 @@ void SPPilable::removeFromPile()
     pileParent = nullptr;
 
     transform = worldTransform;
+}
+
+void SPPilable::moveTo(glm::vec3 target)
+{
+    transform.setPosition(target);
+}
+
+void SPPilable::snapTo(glm::vec3 target)
+{
+    transform.setPosition(target);
 }

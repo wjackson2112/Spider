@@ -8,7 +8,7 @@
 #include <map>
 
 #include "Entity.h"
-#include "ICollisionReceiver.h"
+#include "IAnimationCompleteReceiver.h"
 #include "SPSnapValidator.h"
 #include "SPPilable.h"
 
@@ -54,7 +54,7 @@ enum SPCardValue
     SPVALUE_MAX
 };
 
-class SPCard : public SPPilable//, public ICollisionReceiver
+class SPCard : public SPPilable, public IAnimationCompleteReceiver
 {
     SPCardSuit suit;
     SPCardValue value;
@@ -65,19 +65,12 @@ class SPCard : public SPPilable//, public ICollisionReceiver
 
     glm::vec2 size;
 
-    SPPilable* prevParent = nullptr;
-
-    std::map<ICollisionReceiver*, glm::vec2> overlaps;
-
 public:
     SPCard(glm::vec2 position, SPCardSuit suit, SPCardValue value, bool faceUp, SPSnapValidator* validator);
     ~SPCard();
 
     SPCardSuit getSuit() { return suit; }
     SPCardValue getValue() { return value; }
-
-protected:
-    void settleCard(); // Settle the card in a stack
 
 public:
     SPPilable* getClosestOverlap();
@@ -90,7 +83,11 @@ public:
     bool isFaceDown() { return !isFaceUp(); }
 
     //SPPilable
+    void moveTo(glm::vec3 target);
     glm::vec2 getSize() {return size;}
+
+    //IAnimationCompleteReceiver
+    void animationComplete();
 };
 
 #endif //SP_CARD_H
