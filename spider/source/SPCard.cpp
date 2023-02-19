@@ -163,7 +163,11 @@ bool SPCard::isTopmostAtPoint(glm::vec2 point)
 void SPCard::flip()
 {
     faceUp = !faceUp;
-    receivesUpdates = faceUp;
+
+    // Start receiving updates when card turned face up
+    // NOTE: Face down disable is handled in the animation callback
+    if(isFaceUp())
+        receivesUpdates = true;
 
     if(faceUp)
         getComponent<SpriteSheetComponent2D>()->setSprite(glm::vec2(value, suit));
@@ -190,5 +194,9 @@ void SPCard::moveTo(glm::vec3 target)
 
 void SPCard::animationComplete()
 {
+    // Turn off updates for face down cards after they're all settled
+    if(!getComponent<AnimationComponent>()->hasAnimations() && isFaceDown())
+        receivesUpdates = false;
+
     validator->reportAnimationComplete(this);
 }

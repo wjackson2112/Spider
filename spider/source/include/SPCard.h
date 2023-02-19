@@ -81,6 +81,7 @@ public:
     void flip();
     bool isFaceUp() { return faceUp; }
     bool isFaceDown() { return !isFaceUp(); }
+    bool hasAnimations();
 
     //SPPilable
     void moveTo(glm::vec3 target);
