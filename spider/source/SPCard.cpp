@@ -52,6 +52,18 @@ SPCard::SPCard(glm::vec2 position, SPCardSuit suit, SPCardValue value, bool face
     auto* animationComponent = new AnimationComponent();
     addComponent(animationComponent);
 
+//    std::string text = "0.0";
+//    Shader textShader = AssetManager::getInstance()->loadShader("shaders\\text.vert",
+//                                                                "shaders\\text.frag",
+//                                                                nullptr,
+//                                                                text);
+//    TextFont textFont = AssetManager::getInstance()->loadTextFont("assets\\arial.ttf",
+//                                                                  "arial12", 14);
+//    auto* textComponent = new TextComponent(textShader, textFont, text);
+//    textComponent->setColor(glm::vec3(1.0f, 0.0f, 0.0f));
+//    textComponent->setTransform(glm::vec3(0, -10.f, 0.001f));
+//    addComponent(textComponent);
+
     receivesUpdates = faceUp;
 }
 
@@ -175,6 +187,11 @@ void SPCard::flip()
         getComponent<SpriteSheetComponent2D>()->setSprite(glm::vec2(CARD_BACK_X_INDEX, color));
 };
 
+bool SPCard::hasAnimations()
+{
+    return getComponent<AnimationComponent>()->hasAnimations();
+}
+
 void SPCard::moveTo(glm::vec3 target)
 {
     glm::vec3 translation = target - transform.getPosition();
@@ -184,7 +201,8 @@ void SPCard::moveTo(glm::vec3 target)
     // Determine where the card is already going, so we can just add enough animation
     // to get to the new target without overshooting
     for(auto transformAnim : animComp->getAnimations<TransformAnimation>())
-        translation -= transformAnim.getRemainingTranslation();
+        if(!transformAnim.hasFinished())
+            translation -= transformAnim.getRemainingTranslation();
 
     Transform targetTransform = this->transform;
     targetTransform.translate(translation);

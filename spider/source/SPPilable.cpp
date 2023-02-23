@@ -28,6 +28,12 @@ SPPilable *SPPilable::getPileEnd() {
     return pileChild->getPileEnd();
 }
 
+void SPPilable::raiseToFront()
+{
+    glm::vec3 origPosition = transform.getPosition();
+    transform.setPosition(glm::vec3(origPosition.x, origPosition.y, STACK_MAX));
+}
+
 void SPPilable::addToPile(SPPilable *pilable, bool snap)
 {
     SPPilable* pileEnd = getPileEnd();

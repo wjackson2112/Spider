@@ -8,6 +8,8 @@
 #include "glm/glm.hpp"
 #include "Entity.h"
 
+#define STACK_MIN 0.0f
+#define STACK_MAX 0.1f
 #define STACK_OFFSET 0.0001f
 
 class SPPilable : public Entity
@@ -28,6 +30,7 @@ public:
     SPPilable* getPileParent() { return pileParent; }
     SPPilable* getPileChild() { return pileChild; }
 
+    void raiseToFront();
     void addToPile(SPPilable* pilable, bool snap = false);
     bool isInPile(SPPilable* pilable);
     void removeFromPile();

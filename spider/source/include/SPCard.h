@@ -12,9 +12,6 @@
 #include "SPSnapValidator.h"
 #include "SPPilable.h"
 
-#define STACK_MIN 0.0f
-#define STACK_MAX 0.1f
-
 enum SPCardBackColor
 {
     SPBACK_MIN,

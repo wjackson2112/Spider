@@ -14,6 +14,13 @@
 #include "InputManager.h"
 #include "InputComponent.h"
 
+#include "AssetManager.h"
+#include "TextComponent.h"
+
+#include <iomanip>
+#include <sstream>
+
+bool pilePeeker = true;
 
 
 SPSnapValidatorFourSuits::SPSnapValidatorFourSuits()
@@ -25,6 +32,21 @@ SPSnapValidatorFourSuits::SPSnapValidatorFourSuits()
 
     auto* inputComponent = new InputComponent(config);
     addComponent(inputComponent);
+
+    if(pilePeeker)
+    {
+        std::string text = "0.0";
+        Shader textShader = AssetManager::getInstance()->loadShader("shaders\\text.vert",
+                                                                    "shaders\\text.frag",
+                                                                    nullptr,
+                                                                    text);
+        TextFont textFont = AssetManager::getInstance()->loadTextFont("assets\\arial.ttf",
+                                                                      "arial18", 18);
+        auto* textComponent = new TextComponent(textShader, textFont, text);
+        textComponent->setColor(glm::vec3(1.0f, 0.0f, 0.0f));
+        textComponent->setTransform(glm::vec3(0, -10.f, 0.001f));
+        addComponent(textComponent);
+    }
 
     receivesUpdates = true;
 }
@@ -38,6 +60,7 @@ void SPSnapValidatorFourSuits::deal()
     for(auto* pile : playPiles)
     {
         SPCard* card = dynamic_cast<SPCard*>(deck->getPileEnd());
+        card->raiseToFront();
         card->flip();
         pile->addToPile(card);
     }
@@ -51,6 +74,7 @@ void SPSnapValidatorFourSuits::undoDeal()
         SPPile* pile = *iter;
         SPCard* card = dynamic_cast<SPCard*>(pile->getPileEnd());
         card->removeFromPile();
+        card->raiseToFront();
         deck->addToPile(card);
     }
 }
@@ -205,9 +229,7 @@ void SPSnapValidatorFourSuits::reportGrab(SPPilable *parent, SPPilable *child)
     }
 
     // Pop the card to the front
-    child->getTransform()->setPosition(glm::vec3(child->getWorldTransform().getPosition().x,
-                                                 child->getWorldTransform().getPosition().y,
-                                                 STACK_MAX));
+    child->raiseToFront();
 
     moveList.push_back(MoveEntry(parent, child));
 }
@@ -305,6 +327,8 @@ void SPSnapValidatorFourSuits::undo()
         currentEntry.child->removeFromPile();
     }
 
+    // TODO: Should raiseToFront just be a part of addToPile?
+    currentEntry.child->raiseToFront();
     currentEntry.parent->addToPile(currentEntry.child);
 
     if(SPCard* parentCard = dynamic_cast<SPCard*>(currentEntry.parent))
@@ -348,6 +372,8 @@ void SPSnapValidatorFourSuits::update(float deltaTime)
     static glm::vec2 grabStartPosition = NO_GRAB;
     static glm::vec2 grabOffset = NO_GRAB;
     static SPCard *grabbedCard = nullptr;
+
+    static glm::vec2 lastMousePosition = glm::vec2(0, 0);
 
     auto* inputComponent = getComponent<InputComponent>();
 
@@ -413,6 +439,8 @@ void SPSnapValidatorFourSuits::update(float deltaTime)
                 }
                 case ACTION_NONE:
                 {
+                    lastMousePosition = event.position;
+
                     // We don't care where the mouse is if the card isn't grabbed
                     if (grabbedCard == nullptr)
                         break;
@@ -435,6 +463,40 @@ void SPSnapValidatorFourSuits::update(float deltaTime)
                     return;
             }
         }
+    }
+
+    if(pilePeeker)
+    {
+        std::stringstream stream;
+
+        EntityManager* entityManager = EntityManager::getInstance();
+
+        // Get all cards under the mouse cursor
+        std::vector<SPCard*> cardsUnderPoint;
+        for(Entity* entity : entityManager->getEntitiesInScene(entityManager->getSceneForEntity(this)))
+            if(SPCard* card = dynamic_cast<SPCard*>(entity))
+                if(card->containsPoint(lastMousePosition))
+                    cardsUnderPoint.push_back(card);
+
+        // Sort cards by z depth
+        struct compare_predicate
+        {
+            inline bool operator() (SPCard* card1, SPCard* card2)
+            {
+                return (card1->getWorldTransform().getPosition().z < card2->getWorldTransform().getPosition().z);
+            }
+        };
+        std::sort(cardsUnderPoint.begin(), cardsUnderPoint.end(), compare_predicate());
+
+        // Print the slot the card is currently occupying
+        for(SPCard* card : cardsUnderPoint)
+        {
+            stream << card->getValue() << " " << card->getWorldTransform().getPosition().z * 10000 << "\n";
+        }
+
+        std::string text = stream.str();
+        this->getComponent<TextComponent>()->setText(text);
+        this->getComponent<TextComponent>()->setTransform(Transform(glm::vec3(lastMousePosition.x, lastMousePosition.y, .5f)));
     }
 }
 
@@ -492,6 +554,10 @@ void SPSnapValidatorFourSuits::handleCompleteSuitIfFound(SPPilable *pilable)
             if(currCard->getSuit() != currSuit)
                 return;
 
+            // Cards are still moving, wait until everything is settled
+            if(currCard != pilable && currCard->hasAnimations())
+                return;
+
             if(currCard->getValue() == SPVALUE_ACE)
                 break;
 
@@ -513,6 +579,8 @@ void SPSnapValidatorFourSuits::handleCompleteSuitIfFound(SPPilable *pilable)
         while(outPiles[currOutPile]->getPileChild())
             currOutPile++;
 
+        topCard->removeFromPile();
+        topCard->raiseToFront();
         outPiles[currOutPile]->addToPile(topCard);
         currOutPile++;
 

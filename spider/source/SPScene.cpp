@@ -23,6 +23,8 @@ SPScene::SPScene()
     entityManager->registerEntity(this, new SPFrameCounterEntity());
     auto validator = new SPSnapValidatorFourSuits();
 
-    entityManager->registerEntity(this, validator);
     validator->initialSetup(this);
+
+    // TODO: This currently has to go last to avoid weird depth on the text, fix rendering so this doesn't happen
+    entityManager->registerEntity(this, validator);
 }
