@@ -58,6 +58,7 @@ private:
 public:
     //SPSnapValidator
     void initialSetup(Scene* scene);
+    void updateLayout();
 
     void reportClick(SPPilable* pilable);
 

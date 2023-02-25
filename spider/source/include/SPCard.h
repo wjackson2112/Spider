@@ -82,7 +82,8 @@ public:
 
     //SPPilable
     void moveTo(glm::vec3 target);
-    glm::vec2 getSize() {return size;}
+    void setSize(glm::vec2 size);
+    glm::vec2 getSize() { return size; }
 
     //IAnimationCompleteReceiver
     void animationComplete();

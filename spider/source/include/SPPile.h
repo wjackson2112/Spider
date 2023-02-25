@@ -21,7 +21,8 @@ public:
     bool incrementing = false;
 
     //SPPilable
-    glm::vec2 getSize() {return size;}
+    glm::vec2 getSize() { return size; }
+    void setSize(glm::vec2 size);
 
     SPPile(glm::vec2 position, glm::vec3 rootOffset, glm::vec3 pileOffset, bool incrementing, SPSnapValidator* validator);
     ~SPPile();

@@ -39,3 +39,9 @@ SPPile::~SPPile()
     if(pileChild)
         pileChild->removeFromPile();
 }
+
+void SPPile::setSize(glm::vec2 size)
+{
+    this->size = size;
+    getComponent<SpriteComponent2D>()->setSize(size);
+}

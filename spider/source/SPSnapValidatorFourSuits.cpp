@@ -14,6 +14,9 @@
 #include "InputManager.h"
 #include "InputComponent.h"
 
+#include "SpriteComponent2D.h"
+#include "OptionsManager.h"
+
 #include "AssetManager.h"
 #include "TextComponent.h"
 
@@ -93,6 +96,7 @@ void SPSnapValidatorFourSuits::initialSetup(Scene *scene)
             {
 //                SPCard* newCard = new SPCard(glm::vec2(10.f, 10.f), (SPCardSuit) suit, (SPCardValue) value, false, this);
                 SPCard* newCard = new SPCard(glm::vec2(10.f, 10.f), SPSUIT_SPADE, (SPCardValue) value, false, this);
+
                 entityManager->registerEntity(scene, newCard);
                 cardSet.push_back(newCard);
             }
@@ -163,6 +167,83 @@ void SPSnapValidatorFourSuits::initialSetup(Scene *scene)
     {
         deck->addToPile(cardSet.back(), true);
         cardSet.pop_back();
+    }
+
+    updateLayout();
+}
+
+void SPSnapValidatorFourSuits::updateLayout()
+{
+    glm::vec2 viewportResolution = OptionsManager::getInstance()->getViewportResolution();
+
+    glm::vec2 initialSize = glm::vec2(49.f, 64.f); // TODO: Find a way to not hard code this
+
+    float cardSizeRatio = initialSize.x / initialSize.y;
+
+    int targetWidth = viewportResolution.x / 11; // 11 as in ten piles with pile of width in between
+    int gapWidth = targetWidth / 10;
+
+    int targetHeight = targetWidth / cardSizeRatio;
+
+    // PlayPiles
+    int currX = gapWidth;
+    for(SPPile* playPile : playPiles)
+    {
+        playPile->getTransform()->setPosition2(glm::vec2(currX, targetHeight + (2 * gapWidth)));
+
+        glm::vec2 prevSize = playPile->getSize();
+        float scaleMultiplier = targetWidth/initialSize.x;
+        playPile->setSize(glm::vec2(prevSize.x * scaleMultiplier, prevSize.y * scaleMultiplier));
+
+        for(SPCard* currCard = dynamic_cast<SPCard*>(playPile->getPileChild());
+            currCard != nullptr;
+            currCard = dynamic_cast<SPCard*>(currCard->getPileChild()))
+        {
+            // Card Size
+            glm::vec2 prevSize = currCard->getSize();
+            float scaleMultiplier = targetWidth/initialSize.x;
+            currCard->setSize(glm::vec2(prevSize.x * scaleMultiplier, prevSize.y * scaleMultiplier));
+        }
+
+        currX += targetWidth + gapWidth;
+    }
+
+    // OutPiles
+    currX = gapWidth * 2 + targetWidth * 1.5;
+    int outPileGapWidth = ((viewportResolution.x - currX) - (8 * targetWidth)) / 8;
+    for(SPPile* outPile : outPiles)
+    {
+        outPile->getTransform()->setPosition2(glm::vec2(currX, gapWidth));
+
+        glm::vec2 prevSize = outPile->getSize();
+        float scaleMultiplier = targetWidth/initialSize.x;
+        outPile->setSize(glm::vec2(prevSize.x * scaleMultiplier, prevSize.y * scaleMultiplier));
+
+        for(SPCard* currCard = dynamic_cast<SPCard*>(outPile->getPileChild());
+            currCard != nullptr;
+            currCard = dynamic_cast<SPCard*>(currCard->getPileChild()))
+        {
+            // Card Size
+            glm::vec2 prevSize = currCard->getSize();
+            float scaleMultiplier = targetWidth/initialSize.x;
+            currCard->setSize(glm::vec2(prevSize.x * scaleMultiplier, prevSize.y * scaleMultiplier));
+        }
+
+        currX += targetWidth + outPileGapWidth;
+    }
+
+    // Deck
+    deck->getTransform()->setPosition2(glm::vec2(gapWidth, gapWidth));
+    {
+        for(SPCard* currCard = dynamic_cast<SPCard*>(deck->getPileChild());
+            currCard != nullptr;
+            currCard = dynamic_cast<SPCard*>(currCard->getPileChild()))
+        {
+            // Card Size
+            glm::vec2 prevSize = currCard->getSize();
+            float scaleMultiplier = targetWidth/initialSize.x;
+            currCard->setSize(glm::vec2(prevSize.x * scaleMultiplier, prevSize.y * scaleMultiplier));
+        }
     }
 }
 

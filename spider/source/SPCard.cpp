@@ -14,6 +14,7 @@
 #include "CollisionComponent2DAABB.h"
 #include "AnimationComponent.h"
 #include "TransformAnimation.h"
+#include "OptionsManager.h"
 
 #include "EventManager.h"
 
@@ -208,6 +209,12 @@ void SPCard::moveTo(glm::vec3 target)
     targetTransform.translate(translation);
 
     animComp->addAndStart(new TransformAnimation(&transform, targetTransform, 0.3f, this));
+}
+
+void SPCard::setSize(glm::vec2 size)
+{
+    this->size = size;
+    getComponent<SpriteSheetComponent2D>()->setSize(size);
 }
 
 void SPCard::animationComplete()

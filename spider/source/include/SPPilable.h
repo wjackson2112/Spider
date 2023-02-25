@@ -37,7 +37,9 @@ public:
     virtual ~SPPilable() = default;
     virtual void moveTo(glm::vec3 target);
     virtual void snapTo(glm::vec3 target);
+
     virtual glm::vec2 getSize() { return glm::vec2(0,0); };
+    virtual void setSize(glm::vec2 size) {};
 };
 
 
