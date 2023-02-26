@@ -14,6 +14,16 @@ glm::vec3 SPPilable::getPileOffset()
     return getPileRoot()->pileOffset;
 }
 
+glm::vec3 SPPilable::getInitialRootOffset()
+{
+    return getPileRoot()->initialRootOffset;
+}
+
+glm::vec3 SPPilable::getInitialPileOffset()
+{
+    return getPileRoot()->initialPileOffset;
+}
+
 SPPilable* SPPilable::getPileRoot()
 {
     if(!pileParent)

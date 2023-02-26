@@ -21,4 +21,16 @@ SPBackground::SPBackground()
     glm::vec2 viewportRes = OptionsManager::getInstance()->getViewportResolution();
     auto* spriteComponent = new SpriteComponent2D(shader, texture, viewportRes);
     addComponent(spriteComponent);
+
+    OptionsManager::getInstance()->registerReceiver(this);
+}
+
+SPBackground::~SPBackground()
+{
+    OptionsManager::getInstance()->deregisterReceiver(this);
+}
+
+void SPBackground::resolutionUpdated(glm::vec2 oldRes, glm::vec2 newRes)
+{
+    getComponent<SpriteComponent2D>()->setSize(newRes);
 }

@@ -11,6 +11,7 @@
 #include "IInputReceiver.h"
 #include "SPSnapValidator.h"
 #include "SPPile.h"
+#include "IOptionsReceiver.h"
 
 #include <random>
 
@@ -32,7 +33,7 @@ struct MoveEntry
     }
 };
 
-class SPSnapValidatorFourSuits : public SPSnapValidator, public Entity
+class SPSnapValidatorFourSuits : public SPSnapValidator, public Entity, public IOptionsReceiver
 {
     std::vector<MoveEntry> moveList;
 
@@ -45,6 +46,7 @@ class SPSnapValidatorFourSuits : public SPSnapValidator, public Entity
 
 public:
     SPSnapValidatorFourSuits();
+    ~SPSnapValidatorFourSuits();
 
     void undo();
 
@@ -71,6 +73,10 @@ public:
     void reportAnimationComplete(SPPilable* pilable);
 
     void handleCompleteSuitIfFound(SPPilable *pilable);
+    void rescalePile(SPPilable* pilable);
+
+    //IOptionsReceiver
+    void resolutionUpdated(glm::vec2 oldRes, glm::vec2 newRes);
 };
 
 #endif //SP_SNAP_VALIDATOR_FOUR_SUITS_H

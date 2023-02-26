@@ -51,7 +51,14 @@ SPSnapValidatorFourSuits::SPSnapValidatorFourSuits()
         addComponent(textComponent);
     }
 
+    OptionsManager::getInstance()->registerReceiver(this);
+
     receivesUpdates = true;
+}
+
+SPSnapValidatorFourSuits::~SPSnapValidatorFourSuits()
+{
+    OptionsManager::getInstance()->deregisterReceiver(this);
 }
 
 void SPSnapValidatorFourSuits::deal()
@@ -180,20 +187,23 @@ void SPSnapValidatorFourSuits::updateLayout()
 
     float cardSizeRatio = initialSize.x / initialSize.y;
 
-    int targetWidth = viewportResolution.x / 11; // 11 as in ten piles with pile of width in between
-    int gapWidth = targetWidth / 10;
+    float targetWidth = viewportResolution.x / 11; // 11 as in ten piles with pile of width in between
+    float gapWidth = targetWidth / 11;
 
-    int targetHeight = targetWidth / cardSizeRatio;
+    float targetHeight = targetWidth / cardSizeRatio;
 
     // PlayPiles
-    int currX = gapWidth;
+    float currX = gapWidth;
     for(SPPile* playPile : playPiles)
     {
         playPile->getTransform()->setPosition2(glm::vec2(currX, targetHeight + (2 * gapWidth)));
 
         glm::vec2 prevSize = playPile->getSize();
         float scaleMultiplier = targetWidth/initialSize.x;
-        playPile->setSize(glm::vec2(prevSize.x * scaleMultiplier, prevSize.y * scaleMultiplier));
+        playPile->setSize(glm::vec2(initialSize.x * scaleMultiplier, initialSize.y * scaleMultiplier));
+
+        playPile->setPileOffset(glm::vec3(0.0f, 20.f * targetHeight/initialSize.y, STACK_OFFSET));
+        playPile->setInitialPileOffset(playPile->getPileOffset());
 
         for(SPCard* currCard = dynamic_cast<SPCard*>(playPile->getPileChild());
             currCard != nullptr;
@@ -202,7 +212,15 @@ void SPSnapValidatorFourSuits::updateLayout()
             // Card Size
             glm::vec2 prevSize = currCard->getSize();
             float scaleMultiplier = targetWidth/initialSize.x;
-            currCard->setSize(glm::vec2(prevSize.x * scaleMultiplier, prevSize.y * scaleMultiplier));
+            currCard->setSize(glm::vec2(initialSize.x * scaleMultiplier, initialSize.y * scaleMultiplier));
+
+            currCard->setPileOffset(glm::vec3(0.0f, 20.f * targetHeight/initialSize.y, STACK_OFFSET));
+            currCard->setInitialPileOffset(currCard->getPileOffset());
+
+            if(currCard->getPileParent() == playPile)
+                currCard->snapTo(currCard->getPileParent()->getRootOffset());
+            else
+                currCard->snapTo(currCard->getPileParent()->getPileOffset());
         }
 
         currX += targetWidth + gapWidth;
@@ -210,14 +228,14 @@ void SPSnapValidatorFourSuits::updateLayout()
 
     // OutPiles
     currX = gapWidth * 2 + targetWidth * 1.5;
-    int outPileGapWidth = ((viewportResolution.x - currX) - (8 * targetWidth)) / 8;
+    float outPileGapWidth = ((viewportResolution.x - currX) - (8 * targetWidth)) / 8;
     for(SPPile* outPile : outPiles)
     {
         outPile->getTransform()->setPosition2(glm::vec2(currX, gapWidth));
 
         glm::vec2 prevSize = outPile->getSize();
         float scaleMultiplier = targetWidth/initialSize.x;
-        outPile->setSize(glm::vec2(prevSize.x * scaleMultiplier, prevSize.y * scaleMultiplier));
+        outPile->setSize(glm::vec2(initialSize.x * scaleMultiplier, initialSize.y * scaleMultiplier));
 
         for(SPCard* currCard = dynamic_cast<SPCard*>(outPile->getPileChild());
             currCard != nullptr;
@@ -226,7 +244,7 @@ void SPSnapValidatorFourSuits::updateLayout()
             // Card Size
             glm::vec2 prevSize = currCard->getSize();
             float scaleMultiplier = targetWidth/initialSize.x;
-            currCard->setSize(glm::vec2(prevSize.x * scaleMultiplier, prevSize.y * scaleMultiplier));
+            currCard->setSize(glm::vec2(initialSize.x * scaleMultiplier, initialSize.y * scaleMultiplier));
         }
 
         currX += targetWidth + outPileGapWidth;
@@ -242,7 +260,7 @@ void SPSnapValidatorFourSuits::updateLayout()
             // Card Size
             glm::vec2 prevSize = currCard->getSize();
             float scaleMultiplier = targetWidth/initialSize.x;
-            currCard->setSize(glm::vec2(prevSize.x * scaleMultiplier, prevSize.y * scaleMultiplier));
+            currCard->setSize(glm::vec2(initialSize.x * scaleMultiplier, initialSize.y * scaleMultiplier));
         }
     }
 }
@@ -302,12 +320,8 @@ bool SPSnapValidatorFourSuits::validateGrab(SPPilable *parent, SPPilable *child)
 
 void SPSnapValidatorFourSuits::reportGrab(SPPilable *parent, SPPilable *child)
 {
-//    oldParent = parent;
-
     if(parent)
-    {
         child->removeFromPile();
-    }
 
     // Pop the card to the front
     child->raiseToFront();
@@ -387,7 +401,6 @@ void SPSnapValidatorFourSuits::undo()
 {
     if(moveList.size() <= 0)
         return;
-
 
     MoveEntry currentEntry = moveList.back(); moveList.pop_back();
 
@@ -583,6 +596,9 @@ void SPSnapValidatorFourSuits::update(float deltaTime)
 
 void SPSnapValidatorFourSuits::reportAnimationComplete(SPPilable *pilable)
 {
+    for(auto* playPile : playPiles)
+        rescalePile(playPile);
+
     for(auto outPile : outPiles)
         if(pilable->getPileRoot() == outPile)
             return;
@@ -670,4 +686,51 @@ void SPSnapValidatorFourSuits::handleCompleteSuitIfFound(SPPilable *pilable)
         if(currOutPile >= 8)
             EventManager::getInstance()->broadcastEvent(WON_GAME);
     }
+}
+
+void SPSnapValidatorFourSuits::rescalePile(SPPilable* pilable)
+{
+    if(!pilable)
+        return;
+
+    if(pilable->getPileRoot() == deck)
+        return;
+
+    for(auto* outPile : outPiles)
+        if(pilable->getPileRoot() == outPile)
+            return;
+
+    glm::vec2 viewportRes = OptionsManager::getInstance()->getViewportResolution();
+
+    // Reset pile to initial offset
+    if(pilable->getPileOffset() != pilable->getInitialPileOffset())
+    {
+        for (SPPilable *currPilable = pilable->getPileRoot();
+             currPilable != nullptr; currPilable = currPilable->getPileChild())
+        {
+            currPilable->setPileOffset(currPilable->getInitialPileOffset());
+            if(currPilable != currPilable->getPileRoot() &&
+               currPilable->getPileParent() != currPilable->getPileRoot())
+                currPilable->snapTo(currPilable->getPileParent()->getPileOffset());
+        }
+    }
+
+    // Crush pile down if it doesn't fit
+    while(pilable->getPileEnd()->getWorldTransform().getPosition().y + pilable->getPileEnd()->getSize().y > viewportRes.y - (pilable->getSize().y / 11))
+    {
+        for(SPPilable* currPilable = pilable->getPileRoot(); currPilable != nullptr; currPilable = currPilable->getPileChild())
+        {
+            glm::vec3 offset = currPilable->getPileOffset();
+            offset.y -= 1;
+            currPilable->setPileOffset(offset);
+            if(currPilable != currPilable->getPileRoot() &&
+               currPilable->getPileParent() != currPilable->getPileRoot())
+                currPilable->snapTo(currPilable->getPileParent()->getPileOffset());
+        }
+    }
+}
+
+void SPSnapValidatorFourSuits::resolutionUpdated(glm::vec2 oldRes, glm::vec2 newRes)
+{
+    updateLayout();
 }

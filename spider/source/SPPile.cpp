@@ -18,6 +18,9 @@ SPPile::SPPile(glm::vec2 position, glm::vec3 inRootOffset, glm::vec3 inPileOffse
     rootOffset = inRootOffset;
     pileOffset = inPileOffset;
 
+    initialRootOffset = inRootOffset;
+    initialPileOffset = inPileOffset;
+
     this->transform.setPosition2(position);
 
     Shader shader = AssetManager::getInstance()->loadShader("shaders\\sprite.vert",

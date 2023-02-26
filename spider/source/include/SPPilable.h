@@ -19,11 +19,22 @@ protected:
     SPPilable* pileChild = nullptr;
 
     glm::vec3 rootOffset = glm::vec3(0.0f, 0.0f, STACK_OFFSET);
+    glm::vec3 initialRootOffset = glm::vec3(0.0f, 0.0f, STACK_OFFSET);
     glm::vec3 pileOffset = glm::vec3(0.0f, 0.0f, STACK_OFFSET);
+    glm::vec3 initialPileOffset = glm::vec3(0.0f, 0.0f, STACK_OFFSET);
 
 public:
     glm::vec3 getRootOffset();
     glm::vec3 getPileOffset();
+
+    glm::vec3 getInitialRootOffset();
+    glm::vec3 getInitialPileOffset();
+
+    void setRootOffset(glm::vec3 newOffset) { rootOffset = newOffset; };
+    void setPileOffset(glm::vec3 newOffset) { pileOffset = newOffset; };
+
+    void setInitialRootOffset(glm::vec3 newOffset) { initialRootOffset = newOffset; };
+    void setInitialPileOffset(glm::vec3 newOffset) { initialPileOffset = newOffset; };
 
     SPPilable* getPileRoot();
     SPPilable* getPileEnd();

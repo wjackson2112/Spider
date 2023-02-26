@@ -9,10 +9,15 @@
 #include "Entity.h"
 #include "Texture2D.h"
 
-class SPBackground : public Entity
+#include "IOptionsReceiver.h"
+
+class SPBackground : public Entity, public IOptionsReceiver
 {
 public:
     SPBackground();
+    ~SPBackground();
+
+    void resolutionUpdated(glm::vec2 oldRes, glm::vec2 newRes);
 };
 
 #endif //SP_BACKGROUND_H
