@@ -6,6 +6,9 @@
 #include "SPMainMenu.h"
 #include "SPScene.h"
 #include "EventManager.h"
+#include "Steamworks.h"
+
+#define USE_STEAMWORKS 1
 
 SPGame::SPGame()
 //        : Game(new MainMenu())
@@ -56,8 +59,14 @@ void SPGame::update()
 
 int main()
 {
-    auto window = Window(false);
+#ifdef USE_STEAMWORKS
+    Steamworks steamworks_sdk;
+    if(steamworks_sdk.init())
+        std::cout << "Failed to initialize Steamworks" << std::endl;
+#endif
 
+    auto window = Window(false);
+    
     SPGame spider = SPGame();
 
     std::cout << "Entering main loop" << std::endl;
@@ -73,6 +82,10 @@ int main()
         // Poll GL Events
         window.processInput();
 
+#ifdef USE_STEAMWORKS
+        steamworks_sdk.update();
+#endif
+
         // Update entities
         spider.update();
 
@@ -83,6 +96,7 @@ int main()
     std::cout << "Terminating" << std::endl;
 
     // Terminate
+    SteamAPI_Shutdown();
     window.close();
     return 0;
 }
