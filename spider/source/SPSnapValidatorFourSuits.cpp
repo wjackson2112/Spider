@@ -5,6 +5,7 @@
 #include "SPSnapValidatorFourSuits.h"
 
 #include <algorithm>
+#include <iostream>
 
 #include "SPCard.h"
 #include "SPPile.h"
@@ -22,6 +23,7 @@
 
 #include <iomanip>
 #include <sstream>
+#include <cstdlib>
 
 bool pilePeeker = true;
 
@@ -556,6 +558,14 @@ void SPSnapValidatorFourSuits::update(float deltaTime)
                 default:
                     return;
             }
+        }
+        else if(event.isGamepadEvent())
+        {
+            if(event.padButton != GAMEPAD_BUTTON_NONE)
+                std::cout << "Button: " << event.padButton << " " << event.action << std::endl;
+
+            if(event.axis != GAMEPAD_AXIS_NONE && abs(event.axisValue) > 0.25f)
+                std::cout << "Axis: " << event.axis << " " << event.axisValue << std::endl;
         }
     }
 

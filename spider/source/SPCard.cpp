@@ -8,7 +8,6 @@
 
 #include "AssetManager.h"
 #include "EntityManager.h"
-#include "InputComponent.h"
 //#include "TextComponent.h"
 #include "SpriteSheetComponent2D.h"
 #include "CollisionComponent2DAABB.h"
@@ -43,12 +42,6 @@ SPCard::SPCard(glm::vec2 position, SPCardSuit suit, SPCardValue value, bool face
     else
         spriteComponent = new SpriteSheetComponent2D(shader, texture, size, glm::vec2(14, 4), glm::vec2(CARD_BACK_X_INDEX, color));
     addComponent(spriteComponent);
-
-    InputConfig config = InputConfig();
-    config.mouseButtons.push_back(MOUSE_BUTTON_1);
-    config.receivesMousePosition = true;
-    auto* inputComponent = new InputComponent(config);
-    addComponent(inputComponent);
 
     auto* animationComponent = new AnimationComponent();
     addComponent(animationComponent);

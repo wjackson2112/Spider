@@ -8,7 +8,6 @@
 #include "EventManager.h"
 #include "Steamworks.h"
 
-#define USE_STEAMWORKS 1
 
 SPGame::SPGame()
 //        : Game(new MainMenu())
@@ -60,9 +59,17 @@ void SPGame::update()
 int main()
 {
 #ifdef USE_STEAMWORKS
+    if ( SteamAPI_RestartAppIfNecessary( 480 ) )
+        return 1;
+
     Steamworks steamworks_sdk;
-    if(steamworks_sdk.init())
+    if(steamworks_sdk.init() || !SteamUser()->BLoggedOn())
+    {
         std::cout << "Failed to initialize Steamworks" << std::endl;
+        return 1;
+    }
+
+    SteamClient()->SetWarningMessageHook( &SteamAPIDebugTextHook );
 #endif
 
     auto window = Window(false);
