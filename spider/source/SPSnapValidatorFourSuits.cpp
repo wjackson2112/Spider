@@ -55,6 +55,8 @@ SPSnapValidatorFourSuits::SPSnapValidatorFourSuits()
 
     OptionsManager::getInstance()->registerReceiver(this);
 
+    this->transform.setPosition(glm::vec3(this->transform.getPosition().x, this->transform.getPosition().y, 0.5f));
+
     receivesUpdates = true;
 }
 
@@ -600,7 +602,7 @@ void SPSnapValidatorFourSuits::update(float deltaTime)
 
         std::string text = stream.str();
         this->getComponent<TextComponent>()->setText(text);
-        this->getComponent<TextComponent>()->setTransform(Transform(glm::vec3(lastMousePosition.x, lastMousePosition.y, .5f)));
+        this->getComponent<TextComponent>()->setTransform(Transform(glm::vec3(lastMousePosition.x, lastMousePosition.y, 0.0f)));
     }
 }
 
