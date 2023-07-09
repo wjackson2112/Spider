@@ -9,6 +9,7 @@
 
 #include "SPCard.h"
 #include "SPPile.h"
+#include "SPPointer.h"
 #include "EntityManager.h"
 #include "EventManager.h"
 
@@ -109,6 +110,7 @@ void SPSnapValidatorFourSuits::initialSetup(Scene *scene)
                 SPCard* newCard = new SPCard(glm::vec2(10.f, 10.f), SPSUIT_SPADE, (SPCardValue) value, false, this);
 
                 entityManager->registerEntity(scene, newCard);
+                uiGrid.registerElement(newCard);
                 cardSet.push_back(newCard);
             }
 //        }
@@ -179,6 +181,9 @@ void SPSnapValidatorFourSuits::initialSetup(Scene *scene)
         deck->addToPile(cardSet.back(), true);
         cardSet.pop_back();
     }
+
+    pointer = new SPPointer(deck->getPileEnd(), glm::vec2(5.0f, 5.0f));
+    entityManager->registerEntity(scene, pointer);
 
     updateLayout();
 }
@@ -508,6 +513,7 @@ void SPSnapValidatorFourSuits::update(float deltaTime)
                         grabOffset = glm::vec2(event.position.x - cardPosition.x,
                                                event.position.y - cardPosition.y);
 
+                        grabbedCard->select();
                         reportGrab(grabbedCard->getPileParent(), grabbedCard);
                     }
                     else
@@ -564,10 +570,48 @@ void SPSnapValidatorFourSuits::update(float deltaTime)
         else if(event.isGamepadEvent())
         {
             if(event.padButton != GAMEPAD_BUTTON_NONE)
-                std::cout << "Button: " << event.padButton << " " << event.action << std::endl;
+            {
+                Entity* newTarget = nullptr;
+                if(event.padButton == GAMEPAD_BUTTON_DPAD_UP)
+                {
+                    if (event.action == ACTION_PRESS)
+                    {
+                        newTarget = uiGrid.getElementAbove(pointer->getTarget());
+                    }
+                }
+                else if(event.padButton == GAMEPAD_BUTTON_DPAD_DOWN)
+                {
+                    if (event.action == ACTION_PRESS)
+                    {
+                        newTarget = uiGrid.getElementBelow(pointer->getTarget());
+                    }
+                }
+                else if(event.padButton == GAMEPAD_BUTTON_DPAD_LEFT)
+                {
+                    if (event.action == ACTION_PRESS)
+                    {
+                        newTarget = uiGrid.getElementToLeft(pointer->getTarget());
+                    }
+                }
+                else if(event.padButton == GAMEPAD_BUTTON_DPAD_RIGHT)
+                {
+                    if (event.action == ACTION_PRESS)
+                    {
+                        newTarget = uiGrid.getElementToRight(pointer->getTarget());
+                    }
+                }
+
+                if(newTarget)
+                    pointer->setTarget(newTarget);
+            }
 
             if(event.axis != GAMEPAD_AXIS_NONE && abs(event.axisValue) > 0.25f)
                 std::cout << "Axis: " << event.axis << " " << event.axisValue << std::endl;
+
+            // Down 13
+            // Right 12
+            // Up 11
+            // Left 14
         }
     }
 
@@ -608,6 +652,9 @@ void SPSnapValidatorFourSuits::update(float deltaTime)
 
 void SPSnapValidatorFourSuits::reportAnimationComplete(SPPilable *pilable)
 {
+    if(pilable->isSelected())
+        pilable->deselect();
+
     for(auto* playPile : playPiles)
         rescalePile(playPile);
 

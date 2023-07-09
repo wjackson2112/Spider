@@ -80,6 +80,9 @@ public:
     bool isFaceDown() { return !isFaceUp(); }
     bool hasAnimations();
 
+    void select();
+    void deselect();
+
     //SPPilable
     void moveTo(glm::vec3 target);
     void setSize(glm::vec2 size);

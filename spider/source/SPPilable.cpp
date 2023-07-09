@@ -132,3 +132,13 @@ void SPPilable::snapTo(glm::vec3 target)
 {
     transform.setPosition(target);
 }
+
+void SPPilable::select()
+{
+    selected = true;
+}
+
+void SPPilable::deselect()
+{
+    selected = false;
+}

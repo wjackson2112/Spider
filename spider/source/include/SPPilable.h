@@ -18,6 +18,8 @@ protected:
     SPPilable* pileParent = nullptr;
     SPPilable* pileChild = nullptr;
 
+    bool selected = false;
+
     glm::vec3 rootOffset = glm::vec3(0.0f, 0.0f, STACK_OFFSET);
     glm::vec3 initialRootOffset = glm::vec3(0.0f, 0.0f, STACK_OFFSET);
     glm::vec3 pileOffset = glm::vec3(0.0f, 0.0f, STACK_OFFSET);
@@ -51,6 +53,10 @@ public:
 
     virtual glm::vec2 getSize() { return glm::vec2(0,0); };
     virtual void setSize(glm::vec2 size) {};
+
+    virtual void select();
+    virtual void deselect();
+    virtual bool isSelected() { return selected; }
 };
 
 

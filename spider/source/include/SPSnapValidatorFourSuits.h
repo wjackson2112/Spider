@@ -8,9 +8,11 @@
 #include <vector>
 
 #include "Entity.h"
+#include "UIGrid.h"
 #include "IInputReceiver.h"
 #include "SPSnapValidator.h"
 #include "SPPile.h"
+#include "SPPointer.h"
 #include "IOptionsReceiver.h"
 
 #include <random>
@@ -43,6 +45,9 @@ class SPSnapValidatorFourSuits : public SPSnapValidator, public Entity, public I
     std::vector<SPPile*> playPiles;
     std::vector<SPPile*> outPiles;
     SPPile* deck;
+    SPPointer* pointer;
+
+    UIGrid uiGrid;
 
 public:
     SPSnapValidatorFourSuits();
