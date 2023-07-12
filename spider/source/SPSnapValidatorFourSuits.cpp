@@ -131,6 +131,7 @@ void SPSnapValidatorFourSuits::initialSetup(Scene *scene)
                                   false, this);
         playPiles.push_back(pile);
         entityManager->registerEntity(scene, pile);
+        uiGrid.registerElement(pile);
     }
 
     // Four face down rows
