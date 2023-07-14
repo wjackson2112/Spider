@@ -12,7 +12,7 @@
 #include "IInputReceiver.h"
 #include "SPSnapValidator.h"
 #include "SPPile.h"
-#include "SPPointer.h"
+#include "SPCursor.h"
 #include "IOptionsReceiver.h"
 
 #include <random>
@@ -45,7 +45,7 @@ class SPSnapValidatorFourSuits : public SPSnapValidator, public Entity, public I
     std::vector<SPPile*> playPiles;
     std::vector<SPPile*> outPiles;
     SPPile* deck;
-    SPPointer* pointer;
+    SPCursor* gamepadCursor;
 
     UIGrid uiGrid;
 
@@ -79,6 +79,7 @@ public:
 
     void handleCompleteSuitIfFound(SPPilable *pilable);
     void rescalePile(SPPilable* pilable);
+    void alignPile(SPPilable* pilable);
 
     //IOptionsReceiver
     void resolutionUpdated(glm::vec2 oldRes, glm::vec2 newRes);

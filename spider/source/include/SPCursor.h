@@ -7,10 +7,10 @@
 
 #include "Entity.h"
 
-class SPPointer : public Entity
+class SPCursor : public Entity
 {
 public:
-    SPPointer(Entity* initialTarget, glm::vec2 initialOffset);
+    SPCursor(Entity* initialTarget, glm::vec2 initialOffset);
     Entity* getTarget() { return parent; }
     void setTarget(Entity* newTarget) { this->setParent(newTarget); }
 

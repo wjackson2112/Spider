@@ -2,13 +2,13 @@
 // Created by Will on 3/31/2023.
 //
 
-#include "SPPointer.h"
+#include "SPCursor.h"
 
 #include "SpriteComponent2D.h"
 #include "AnimationComponent.h"
 #include "AssetManager.h"
 
-SPPointer::SPPointer(Entity* target, glm::vec2 offset)
+SPCursor::SPCursor(Entity* target, glm::vec2 offset)
 {
     setParent(target);
     transform.setPosition(glm::vec3(offset.x, offset.y, 0.01f));

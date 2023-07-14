@@ -9,7 +9,7 @@
 
 #include "SPCard.h"
 #include "SPPile.h"
-#include "SPPointer.h"
+#include "SPCursor.h"
 #include "EntityManager.h"
 #include "EventManager.h"
 
@@ -183,8 +183,8 @@ void SPSnapValidatorFourSuits::initialSetup(Scene *scene)
         cardSet.pop_back();
     }
 
-    pointer = new SPPointer(deck->getPileEnd(), glm::vec2(5.0f, 5.0f));
-    entityManager->registerEntity(scene, pointer);
+    gamepadCursor = new SPCursor(deck->getPileEnd(), glm::vec2(5.0f, 5.0f));
+    entityManager->registerEntity(scene, gamepadCursor);
 
     updateLayout();
 }
@@ -573,37 +573,164 @@ void SPSnapValidatorFourSuits::update(float deltaTime)
             if(event.padButton != GAMEPAD_BUTTON_NONE)
             {
                 Entity* newTarget = nullptr;
-                if(event.padButton == GAMEPAD_BUTTON_DPAD_UP)
+                glm::vec2 cursorPosition = gamepadCursor->getWorldTransform().getPosition2();
+                switch(event.padButton)
                 {
-                    if (event.action == ACTION_PRESS)
-                    {
-                        newTarget = uiGrid.getElementAbove(pointer->getTarget());
-                    }
-                }
-                else if(event.padButton == GAMEPAD_BUTTON_DPAD_DOWN)
-                {
-                    if (event.action == ACTION_PRESS)
-                    {
-                        newTarget = uiGrid.getElementBelow(pointer->getTarget());
-                    }
-                }
-                else if(event.padButton == GAMEPAD_BUTTON_DPAD_LEFT)
-                {
-                    if (event.action == ACTION_PRESS)
-                    {
-                        newTarget = uiGrid.getElementToLeft(pointer->getTarget());
-                    }
-                }
-                else if(event.padButton == GAMEPAD_BUTTON_DPAD_RIGHT)
-                {
-                    if (event.action == ACTION_PRESS)
-                    {
-                        newTarget = uiGrid.getElementToRight(pointer->getTarget());
-                    }
-                }
+                    case GAMEPAD_BUTTON_DPAD_UP: {
+                        if (event.action == ACTION_PRESS)
+                        {
+                            newTarget = uiGrid.getElementAbove(gamepadCursor->getTarget());
+                            if(!newTarget)
+                                continue;
 
-                if(newTarget)
-                    pointer->setTarget(newTarget);
+                            gamepadCursor->setTarget(newTarget);
+                            cursorPosition = gamepadCursor->getWorldTransform().getPosition2();
+
+                            glm::vec3 offset = glm::vec3(0);
+                            if(SPPilable* pilableTarget = dynamic_cast<SPPilable*>(newTarget))
+                                offset = pilableTarget->getPileOffset();
+
+                            if (grabbedCard)
+                            {
+                                grabbedCard->getTransform()->setPosition2(glm::vec2(cursorPosition.x + offset.x - grabOffset.x,
+                                                                                    cursorPosition.y + offset.y - grabOffset.y));
+                                gamepadCursor->setTarget(grabbedCard);
+                            }
+                        }
+                        break;
+                    }
+                    case GAMEPAD_BUTTON_DPAD_DOWN:
+                    {
+                        if (event.action == ACTION_PRESS)
+                        {
+                            newTarget = uiGrid.getElementBelow(gamepadCursor->getTarget());
+                            if(!newTarget)
+                                continue;
+
+                            gamepadCursor->setTarget(newTarget);
+                            cursorPosition = gamepadCursor->getWorldTransform().getPosition2();
+
+                            glm::vec3 offset = glm::vec3(0);
+                            if(SPPilable* pilableTarget = dynamic_cast<SPPilable*>(newTarget))
+                                offset = pilableTarget->getPileOffset();
+
+                            if (grabbedCard)
+                            {
+                                grabbedCard->getTransform()->setPosition2(glm::vec2(cursorPosition.x + offset.x - grabOffset.x,
+                                                                                    cursorPosition.y + offset.y - grabOffset.y));
+                                gamepadCursor->setTarget(grabbedCard);
+                            }
+                        }
+                        break;
+                    }
+                    case GAMEPAD_BUTTON_DPAD_LEFT:
+                    {
+                        if (event.action == ACTION_PRESS)
+                        {
+                            newTarget = uiGrid.getElementToLeft(gamepadCursor->getTarget());
+                            if(!newTarget)
+                                continue;
+
+                            gamepadCursor->setTarget(newTarget);
+                            cursorPosition = gamepadCursor->getWorldTransform().getPosition2();
+
+                            glm::vec3 offset = glm::vec3(0);
+                            if(SPPilable* pilableTarget = dynamic_cast<SPPilable*>(newTarget))
+                                offset = pilableTarget->getPileOffset();
+
+                            if (grabbedCard)
+                            {
+                                grabbedCard->getTransform()->setPosition2(glm::vec2(cursorPosition.x + offset.x - grabOffset.x,
+                                                                                    cursorPosition.y + offset.y - grabOffset.y));
+                                gamepadCursor->setTarget(grabbedCard);
+                            }
+                        }
+                        break;
+                    }
+                    case GAMEPAD_BUTTON_DPAD_RIGHT:
+                    {
+                        if (event.action == ACTION_PRESS) {
+                            newTarget = uiGrid.getElementToRight(gamepadCursor->getTarget());
+                            if(!newTarget)
+                                continue;
+
+                            gamepadCursor->setTarget(newTarget);
+                            cursorPosition = gamepadCursor->getWorldTransform().getPosition2();
+
+                            glm::vec3 offset = glm::vec3(0);
+                            if(SPPilable* pilableTarget = dynamic_cast<SPPilable*>(newTarget))
+                                offset = pilableTarget->getPileOffset();
+
+                            if (grabbedCard)
+                            {
+                                grabbedCard->getTransform()->setPosition2(glm::vec2(cursorPosition.x + offset.x - grabOffset.x,
+                                                                                    cursorPosition.y + offset.y - grabOffset.y));
+                                gamepadCursor->setTarget(grabbedCard);
+                            }
+                        }
+                        break;
+                    }
+                    case GAMEPAD_BUTTON_A:
+                    {
+                        if (event.action == ACTION_PRESS) {
+                            if (grabbedCard)
+                            {
+                                SPPilable* bestPilable = grabbedCard->getClosestOverlap();
+                                if(bestPilable)
+                                    reportRelease(bestPilable, grabbedCard);
+                                else
+                                    undo();
+
+                                grabbedCard = nullptr;
+                            }
+                            else
+                            {
+                                grabbedCard = getTopmostCardAtPosition(cursorPosition);
+                                if (grabbedCard && validateGrab(grabbedCard->getPileParent(), grabbedCard)) {
+                                    glm::vec2 cardPosition = grabbedCard->getWorldTransform().getPosition2();
+                                    grabStartPosition = cursorPosition;
+                                    grabOffset = glm::vec2(cursorPosition.x - cardPosition.x,
+                                                           cursorPosition.y - cardPosition.y);
+
+                                    grabbedCard->select();
+                                    reportGrab(grabbedCard->getPileParent(), grabbedCard);
+                                }
+                            }
+                            break;
+                        }
+                    }
+                    case GAMEPAD_BUTTON_B:
+                    {
+                        if (event.action == ACTION_PRESS) {
+                            if (grabbedCard)
+                            {
+                                undo();
+                                grabbedCard = nullptr;
+                            }
+                        }
+                        break;
+                    }
+                    case GAMEPAD_BUTTON_Y:
+                    {
+                        if (event.action == ACTION_PRESS) {
+                            if (!grabbedCard)
+                            {
+                                deal();
+                            }
+                        }
+                        break;
+                    }
+                    case GAMEPAD_BUTTON_X:
+                    {
+                        if (event.action == ACTION_PRESS) {
+                            if (!grabbedCard)
+                            {
+                                undo();
+                            }
+                        }
+                        break;
+                    }
+                }
             }
 
             if(event.axis != GAMEPAD_AXIS_NONE && abs(event.axisValue) > 0.25f)
@@ -642,7 +769,7 @@ void SPSnapValidatorFourSuits::update(float deltaTime)
         // Print the slot the card is currently occupying
         for(SPCard* card : cardsUnderPoint)
         {
-            stream << card->getValue() << " " << card->getWorldTransform().getPosition().z * 10000 << "\n";
+            stream << card->getValue() << " " << card->getWorldTransform().getPosition().x << " " << card->getWorldTransform().getPosition().y << "\n";
         }
 
         std::string text = stream.str();
@@ -653,6 +780,8 @@ void SPSnapValidatorFourSuits::update(float deltaTime)
 
 void SPSnapValidatorFourSuits::reportAnimationComplete(SPPilable *pilable)
 {
+    SPSnapValidatorFourSuits::alignPile(pilable);
+
     if(pilable->isSelected())
         pilable->deselect();
 
@@ -787,6 +916,18 @@ void SPSnapValidatorFourSuits::rescalePile(SPPilable* pilable)
                currPilable->getPileParent() != currPilable->getPileRoot())
                 currPilable->snapTo(currPilable->getPileParent()->getPileOffset());
         }
+    }
+}
+
+void SPSnapValidatorFourSuits::alignPile(SPPilable* pilable)
+{
+    SPPilable *currPilable = pilable->getPileRoot();
+    currPilable->getPileChild()->getTransform()->setPosition(currPilable->getRootOffset());
+    currPilable = currPilable->getPileChild();
+
+    for (;currPilable->getPileChild() != nullptr; currPilable = currPilable->getPileChild())
+    {
+        currPilable->getPileChild()->getTransform()->setPosition(currPilable->getPileOffset());
     }
 }
 
