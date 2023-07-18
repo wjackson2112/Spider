@@ -47,7 +47,9 @@ class SPSnapValidatorFourSuits : public SPSnapValidator, public Entity, public I
     SPPile* deck;
     SPCursor* gamepadCursor;
 
-    UIGrid uiGrid;
+    UIGrid unselectedUIGrid;
+    UIGrid selectedUIGrid;
+    UIGrid* activeUIGrid;
 
 public:
     SPSnapValidatorFourSuits();
@@ -83,6 +85,11 @@ public:
 
     //IOptionsReceiver
     void resolutionUpdated(glm::vec2 oldRes, glm::vec2 newRes);
+
+private:
+    void updateUnselectedUIGrid();
+    void updateSelectedUIGrid(SPCard* selectedCard);
+    void swapUIGrid();
 };
 
 #endif //SP_SNAP_VALIDATOR_FOUR_SUITS_H

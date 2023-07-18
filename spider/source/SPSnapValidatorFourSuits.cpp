@@ -59,6 +59,18 @@ SPSnapValidatorFourSuits::SPSnapValidatorFourSuits()
     this->transform.setPosition(glm::vec3(this->transform.getPosition().x, this->transform.getPosition().y, 0.5f));
 
     receivesUpdates = true;
+
+    unselectedUIGrid.setPriorityX(UIGD_PRIORITIZE_AXIS);
+    unselectedUIGrid.setPriorityY(UIGD_PRIORITIZE_ALIGNMENT);
+    unselectedUIGrid.wrapX = true;
+    unselectedUIGrid.wrapY = true;
+
+    selectedUIGrid.setPriorityX(UIGD_PRIORITIZE_AXIS);
+    selectedUIGrid.setPriorityY(UIGD_PRIORITIZE_ALIGNMENT);
+    selectedUIGrid.wrapX = true;
+    selectedUIGrid.wrapY = true;
+
+    activeUIGrid = &unselectedUIGrid;
 }
 
 SPSnapValidatorFourSuits::~SPSnapValidatorFourSuits()
@@ -80,6 +92,8 @@ void SPSnapValidatorFourSuits::deal()
         pile->addToPile(card);
     }
     moveList.push_back(MoveEntry(nullptr, nullptr));
+
+    updateUnselectedUIGrid();
 }
 
 void SPSnapValidatorFourSuits::undoDeal()
@@ -91,7 +105,12 @@ void SPSnapValidatorFourSuits::undoDeal()
         card->removeFromPile();
         card->raiseToFront();
         deck->addToPile(card);
+
+        if(gamepadCursor->getTarget() == card)
+            gamepadCursor->setTarget(activeUIGrid->getElementBelow(card));
     }
+
+    updateUnselectedUIGrid();
 }
 
 void SPSnapValidatorFourSuits::initialSetup(Scene *scene)
@@ -110,7 +129,6 @@ void SPSnapValidatorFourSuits::initialSetup(Scene *scene)
                 SPCard* newCard = new SPCard(glm::vec2(10.f, 10.f), SPSUIT_SPADE, (SPCardValue) value, false, this);
 
                 entityManager->registerEntity(scene, newCard);
-                uiGrid.registerElement(newCard);
                 cardSet.push_back(newCard);
             }
 //        }
@@ -131,7 +149,6 @@ void SPSnapValidatorFourSuits::initialSetup(Scene *scene)
                                   false, this);
         playPiles.push_back(pile);
         entityManager->registerEntity(scene, pile);
-        uiGrid.registerElement(pile);
     }
 
     // Four face down rows
@@ -183,10 +200,11 @@ void SPSnapValidatorFourSuits::initialSetup(Scene *scene)
         cardSet.pop_back();
     }
 
-    gamepadCursor = new SPCursor(deck->getPileEnd(), glm::vec2(5.0f, 5.0f));
+    gamepadCursor = new SPCursor(playPiles[0]->getPileEnd(), glm::vec2(5.0f, 5.0f));
     entityManager->registerEntity(scene, gamepadCursor);
 
     updateLayout();
+    updateUnselectedUIGrid();
 }
 
 void SPSnapValidatorFourSuits::updateLayout()
@@ -405,6 +423,9 @@ void SPSnapValidatorFourSuits::reportRelease(SPPilable *parent, SPPilable *child
             return;
         }
     }
+
+    unselectedUIGrid.clearBearing();
+    updateUnselectedUIGrid();
 }
 
 void SPSnapValidatorFourSuits::undo()
@@ -449,6 +470,8 @@ void SPSnapValidatorFourSuits::undo()
     // Undo again if it's a suit move to break the suited stack
     if(isSuitMove)
         undo();
+    else
+        updateUnselectedUIGrid();
 }
 
 SPCard* SPSnapValidatorFourSuits::getTopmostCardAtPosition(glm::vec2 position)
@@ -579,7 +602,7 @@ void SPSnapValidatorFourSuits::update(float deltaTime)
                     case GAMEPAD_BUTTON_DPAD_UP: {
                         if (event.action == ACTION_PRESS)
                         {
-                            newTarget = uiGrid.getElementAbove(gamepadCursor->getTarget());
+                            newTarget = activeUIGrid->getElementAbove(gamepadCursor->getTarget());
                             if(!newTarget)
                                 continue;
 
@@ -588,7 +611,12 @@ void SPSnapValidatorFourSuits::update(float deltaTime)
 
                             glm::vec3 offset = glm::vec3(0);
                             if(SPPilable* pilableTarget = dynamic_cast<SPPilable*>(newTarget))
-                                offset = pilableTarget->getPileOffset();
+                            {
+                                if (pilableTarget == pilableTarget->getPileRoot())
+                                    offset = pilableTarget->getRootOffset();
+                                else
+                                    offset = pilableTarget->getPileOffset();
+                            }
 
                             if (grabbedCard)
                             {
@@ -603,7 +631,7 @@ void SPSnapValidatorFourSuits::update(float deltaTime)
                     {
                         if (event.action == ACTION_PRESS)
                         {
-                            newTarget = uiGrid.getElementBelow(gamepadCursor->getTarget());
+                            newTarget = activeUIGrid->getElementBelow(gamepadCursor->getTarget());
                             if(!newTarget)
                                 continue;
 
@@ -612,7 +640,12 @@ void SPSnapValidatorFourSuits::update(float deltaTime)
 
                             glm::vec3 offset = glm::vec3(0);
                             if(SPPilable* pilableTarget = dynamic_cast<SPPilable*>(newTarget))
-                                offset = pilableTarget->getPileOffset();
+                            {
+                                if (pilableTarget == pilableTarget->getPileRoot())
+                                    offset = pilableTarget->getRootOffset();
+                                else
+                                    offset = pilableTarget->getPileOffset();
+                            }
 
                             if (grabbedCard)
                             {
@@ -627,7 +660,7 @@ void SPSnapValidatorFourSuits::update(float deltaTime)
                     {
                         if (event.action == ACTION_PRESS)
                         {
-                            newTarget = uiGrid.getElementToLeft(gamepadCursor->getTarget());
+                            newTarget = activeUIGrid->getElementToLeft(gamepadCursor->getTarget());
                             if(!newTarget)
                                 continue;
 
@@ -636,7 +669,12 @@ void SPSnapValidatorFourSuits::update(float deltaTime)
 
                             glm::vec3 offset = glm::vec3(0);
                             if(SPPilable* pilableTarget = dynamic_cast<SPPilable*>(newTarget))
-                                offset = pilableTarget->getPileOffset();
+                            {
+                                if (pilableTarget == pilableTarget->getPileRoot())
+                                    offset = pilableTarget->getRootOffset();
+                                else
+                                    offset = pilableTarget->getPileOffset();
+                            }
 
                             if (grabbedCard)
                             {
@@ -650,7 +688,7 @@ void SPSnapValidatorFourSuits::update(float deltaTime)
                     case GAMEPAD_BUTTON_DPAD_RIGHT:
                     {
                         if (event.action == ACTION_PRESS) {
-                            newTarget = uiGrid.getElementToRight(gamepadCursor->getTarget());
+                            newTarget = activeUIGrid->getElementToRight(gamepadCursor->getTarget());
                             if(!newTarget)
                                 continue;
 
@@ -659,7 +697,12 @@ void SPSnapValidatorFourSuits::update(float deltaTime)
 
                             glm::vec3 offset = glm::vec3(0);
                             if(SPPilable* pilableTarget = dynamic_cast<SPPilable*>(newTarget))
-                                offset = pilableTarget->getPileOffset();
+                            {
+                                if (pilableTarget == pilableTarget->getPileRoot())
+                                    offset = pilableTarget->getRootOffset();
+                                else
+                                    offset = pilableTarget->getPileOffset();
+                            }
 
                             if (grabbedCard)
                             {
@@ -682,11 +725,15 @@ void SPSnapValidatorFourSuits::update(float deltaTime)
                                     undo();
 
                                 grabbedCard = nullptr;
+                                swapUIGrid();
                             }
                             else
                             {
-                                grabbedCard = getTopmostCardAtPosition(cursorPosition);
-                                if (grabbedCard && validateGrab(grabbedCard->getPileParent(), grabbedCard)) {
+                                SPCard* potentialCard = getTopmostCardAtPosition(cursorPosition);
+                                if (potentialCard && validateGrab(potentialCard->getPileParent(), potentialCard)) {
+                                    grabbedCard = potentialCard;
+                                    updateSelectedUIGrid(grabbedCard);
+                                    swapUIGrid();
                                     glm::vec2 cardPosition = grabbedCard->getWorldTransform().getPosition2();
                                     grabStartPosition = cursorPosition;
                                     grabOffset = glm::vec2(cursorPosition.x - cardPosition.x,
@@ -706,6 +753,7 @@ void SPSnapValidatorFourSuits::update(float deltaTime)
                             {
                                 undo();
                                 grabbedCard = nullptr;
+                                swapUIGrid();
                             }
                         }
                         break;
@@ -798,6 +846,14 @@ void SPSnapValidatorFourSuits::reportAnimationComplete(SPPilable *pilable)
         return;
     }
 
+    // All piles filled, you win!
+    int currOutPile = 0;
+    while(outPiles[currOutPile]->getPileChild())
+        currOutPile++;
+
+    if(currOutPile >= 8)
+        EventManager::getInstance()->broadcastEvent(WON_GAME);
+
     handleCompleteSuitIfFound(pilable);
 }
 
@@ -865,15 +921,14 @@ void SPSnapValidatorFourSuits::handleCompleteSuitIfFound(SPPilable *pilable)
         while(outPiles[currOutPile]->getPileChild())
             currOutPile++;
 
+        gamepadCursor->setTarget(topCard->getPileParent());
+
         topCard->removeFromPile();
         topCard->raiseToFront();
         outPiles[currOutPile]->addToPile(topCard);
         currOutPile++;
 
-        // All piles filled, you win!
-        // TODO: Make sure all animations are settled before doing this so the final animation isn't lost
-        if(currOutPile >= 8)
-            EventManager::getInstance()->broadcastEvent(WON_GAME);
+        updateUnselectedUIGrid();
     }
 }
 
@@ -934,4 +989,50 @@ void SPSnapValidatorFourSuits::alignPile(SPPilable* pilable)
 void SPSnapValidatorFourSuits::resolutionUpdated(glm::vec2 oldRes, glm::vec2 newRes)
 {
     updateLayout();
+}
+
+void SPSnapValidatorFourSuits::updateUnselectedUIGrid()
+{
+    unselectedUIGrid.deregisterAllElements();
+
+    for(SPPile* pile : playPiles)
+    {
+        if(pile->getPileChild() == nullptr)
+        {
+            unselectedUIGrid.registerElement(pile);
+            continue;
+        }
+
+        for(SPPilable* pilable = pile->getPileEnd(); pilable != nullptr; pilable = pilable->getPileParent())
+        {
+            if(SPCard* card = dynamic_cast<SPCard*>(pilable))
+            {
+                if(card->isFaceUp())
+                {
+                    unselectedUIGrid.registerElement(card);
+                }
+            }
+        }
+    }
+}
+
+void SPSnapValidatorFourSuits::updateSelectedUIGrid(SPCard* selectedCard)
+{
+    selectedUIGrid.deregisterAllElements();
+
+    selectedUIGrid.registerElement(selectedCard->getPileParent());
+
+    for(SPPile* pile : playPiles)
+    {
+        if(validateRelease(pile->getPileEnd(), selectedCard))
+            selectedUIGrid.registerElement(pile->getPileEnd());
+    }
+}
+
+void SPSnapValidatorFourSuits::swapUIGrid()
+{
+    if(activeUIGrid == &unselectedUIGrid)
+        activeUIGrid = &selectedUIGrid;
+    else
+        activeUIGrid = &unselectedUIGrid;
 }
