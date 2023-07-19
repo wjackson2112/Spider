@@ -133,13 +133,13 @@ void SPSnapValidatorFourSuits::initialSetup(Scene *scene)
             }
 //        }
     }
-    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
-    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
-    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
-    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
-    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
-    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
-    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
+//    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
+//    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
+//    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
+//    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
+//    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
+//    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
+//    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
 
     for(int i = 0; i < 10; i++)
     {
@@ -836,6 +836,23 @@ void SPSnapValidatorFourSuits::reportAnimationComplete(SPPilable *pilable)
     for(auto* playPile : playPiles)
         rescalePile(playPile);
 
+    // All piles filled, you win!
+    // TODO: Maybe it's worth checking if the parent is an outpile too to optimize this?
+    if(dynamic_cast<SPCard*>(pilable)->getValue() == SPVALUE_KING)
+    {
+        bool winDetected = true;
+        for(int currOutPile = 0; currOutPile < 8; currOutPile++)
+        {
+            if (!outPiles[currOutPile]->getPileChild()) {
+                winDetected = false;
+                break;
+            }
+        }
+
+        if(winDetected)
+            EventManager::getInstance()->broadcastEvent(WON_GAME);
+    }
+
     for(auto outPile : outPiles)
         if(pilable->getPileRoot() == outPile)
             return;
@@ -845,14 +862,6 @@ void SPSnapValidatorFourSuits::reportAnimationComplete(SPPilable *pilable)
         dynamic_cast<SPCard *>(pilable)->flip();
         return;
     }
-
-    // All piles filled, you win!
-    int currOutPile = 0;
-    while(outPiles[currOutPile]->getPileChild())
-        currOutPile++;
-
-    if(currOutPile >= 8)
-        EventManager::getInstance()->broadcastEvent(WON_GAME);
 
     handleCompleteSuitIfFound(pilable);
 }
