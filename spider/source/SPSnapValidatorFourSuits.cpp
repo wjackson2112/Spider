@@ -133,13 +133,13 @@ void SPSnapValidatorFourSuits::initialSetup(Scene *scene)
             }
 //        }
     }
-//    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
-//    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
-//    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
-//    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
-//    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
-//    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
-//    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
+    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
+    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
+    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
+    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
+    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
+    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
+    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
 
     for(int i = 0; i < 10; i++)
     {
