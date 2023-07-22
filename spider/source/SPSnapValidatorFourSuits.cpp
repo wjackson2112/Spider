@@ -403,7 +403,13 @@ bool SPSnapValidatorFourSuits::validateRelease(SPPilable* parent, SPPilable* chi
 
 void SPSnapValidatorFourSuits::reportRelease(SPPilable *parent, SPPilable *child)
 {
-    parent->addToPile(child);
+    parent->addToPile(child, inputMode == IM_GAMEPAD);
+
+    if(inputMode == IM_GAMEPAD)
+    {
+        child->deselect();
+        handleCompleteSuitIfFound(child);
+    }
 
     // Flip face down cards in play when their child is removed
     if(SPCard* oldParentCard = dynamic_cast<SPCard*>(moveList.back().parent))
@@ -472,6 +478,9 @@ void SPSnapValidatorFourSuits::undo()
         undo();
     else
         updateUnselectedUIGrid();
+
+    if(inputMode == IM_GAMEPAD)
+        currentEntry.child->deselect();
 }
 
 SPCard* SPSnapValidatorFourSuits::getTopmostCardAtPosition(glm::vec2 position)
@@ -525,6 +534,12 @@ void SPSnapValidatorFourSuits::update(float deltaTime)
         }
         else if(event.isMouseEvent())
         {
+            if(inputMode != IM_MKB)
+            {
+                gamepadCursor->disable();
+                inputMode = IM_MKB;
+            }
+
             switch(event.action)
             {
                 case ACTION_PRESS:
@@ -593,7 +608,9 @@ void SPSnapValidatorFourSuits::update(float deltaTime)
         }
         else if(event.isGamepadEvent())
         {
-            if(event.padButton != GAMEPAD_BUTTON_NONE)
+
+
+            if(event.padButton != GAMEPAD_BUTTON_NONE && inputMode == IM_GAMEPAD)
             {
                 Entity* newTarget = nullptr;
                 glm::vec2 cursorPosition = gamepadCursor->getWorldTransform().getPosition2();
@@ -779,6 +796,12 @@ void SPSnapValidatorFourSuits::update(float deltaTime)
                         break;
                     }
                 }
+            }
+            else if(inputMode != IM_GAMEPAD)
+            {
+                gamepadCursor->enable();
+                gamepadCursor->setTarget(playPiles[0]->getPileEnd());
+                inputMode = IM_GAMEPAD;
             }
 
             if(event.axis != GAMEPAD_AXIS_NONE && abs(event.axisValue) > 0.25f)

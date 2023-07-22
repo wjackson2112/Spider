@@ -35,6 +35,12 @@ struct MoveEntry
     }
 };
 
+enum InputMode
+{
+    IM_MKB,
+    IM_GAMEPAD
+};
+
 class SPSnapValidatorFourSuits : public SPSnapValidator, public Entity, public IOptionsReceiver
 {
     std::vector<MoveEntry> moveList;
@@ -50,6 +56,8 @@ class SPSnapValidatorFourSuits : public SPSnapValidator, public Entity, public I
     UIGrid unselectedUIGrid;
     UIGrid selectedUIGrid;
     UIGrid* activeUIGrid;
+
+    InputMode inputMode = IM_MKB;
 
 public:
     SPSnapValidatorFourSuits();

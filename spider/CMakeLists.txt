@@ -8,7 +8,7 @@ add_executable(Spider source/SPGame.cpp
                       source/SPPile.cpp
                       source/SPPilable.cpp
                       source/SPFrameCounterEntity.cpp
-                      source/SPPointer.cpp)
+        source/SPCursor.cpp)
 
 target_include_directories(Spider
                            PUBLIC
