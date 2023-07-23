@@ -48,6 +48,8 @@ class SPSnapValidatorFourSuits : public SPSnapValidator, public Entity, public I
     std::random_device rd = std::random_device {};
     std::default_random_engine rng = std::default_random_engine {rd()};
 
+    std::vector<SPCard*> ghostCards;
+
     std::vector<SPPile*> playPiles;
     std::vector<SPPile*> outPiles;
     SPPile* deck;
@@ -98,6 +100,8 @@ private:
     void updateUnselectedUIGrid();
     void updateSelectedUIGrid(SPCard* selectedCard);
     void swapUIGrid();
+    void updateGhostCards(SPCard* selectedCard);
+    void clearGhostCards();
 };
 
 #endif //SP_SNAP_VALIDATOR_FOUR_SUITS_H

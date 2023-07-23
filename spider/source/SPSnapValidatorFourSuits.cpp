@@ -291,6 +291,11 @@ void SPSnapValidatorFourSuits::updateLayout()
             currCard->setSize(glm::vec2(initialSize.x * scaleMultiplier, initialSize.y * scaleMultiplier));
         }
     }
+
+    for(SPPile* pile : playPiles)
+    {
+        rescalePile(pile);
+    }
 }
 
 void SPSnapValidatorFourSuits::reportClick(SPPilable* pilable)
@@ -608,8 +613,6 @@ void SPSnapValidatorFourSuits::update(float deltaTime)
         }
         else if(event.isGamepadEvent())
         {
-
-
             if(event.padButton != GAMEPAD_BUTTON_NONE && inputMode == IM_GAMEPAD)
             {
                 Entity* newTarget = nullptr;
@@ -735,6 +738,8 @@ void SPSnapValidatorFourSuits::update(float deltaTime)
                         if (event.action == ACTION_PRESS) {
                             if (grabbedCard)
                             {
+                                clearGhostCards();
+
                                 SPPilable* bestPilable = grabbedCard->getClosestOverlap();
                                 if(bestPilable)
                                     reportRelease(bestPilable, grabbedCard);
@@ -768,6 +773,7 @@ void SPSnapValidatorFourSuits::update(float deltaTime)
                         if (event.action == ACTION_PRESS) {
                             if (grabbedCard)
                             {
+                                clearGhostCards();
                                 undo();
                                 grabbedCard = nullptr;
                                 swapUIGrid();
@@ -796,6 +802,9 @@ void SPSnapValidatorFourSuits::update(float deltaTime)
                         break;
                     }
                 }
+
+                if(grabbedCard)
+                    updateGhostCards(grabbedCard);
             }
             else if(inputMode != IM_GAMEPAD)
             {
@@ -863,8 +872,9 @@ void SPSnapValidatorFourSuits::reportAnimationComplete(SPPilable *pilable)
     // TODO: Maybe it's worth checking if the parent is an outpile too to optimize this?
     if(dynamic_cast<SPCard*>(pilable)->getValue() == SPVALUE_KING)
     {
-        bool winDetected = true;
-        for(int currOutPile = 0; currOutPile < 8; currOutPile++)
+        bool winDetected = outPiles.size() == 8;
+
+        for(int currOutPile = 0; currOutPile < outPiles.size(); currOutPile++)
         {
             if (!outPiles[currOutPile]->getPileChild()) {
                 winDetected = false;
@@ -1067,4 +1077,39 @@ void SPSnapValidatorFourSuits::swapUIGrid()
         activeUIGrid = &selectedUIGrid;
     else
         activeUIGrid = &unselectedUIGrid;
+}
+
+void SPSnapValidatorFourSuits::updateGhostCards(SPCard* selectedCard)
+{
+    for(SPPile* pile : playPiles)
+    {
+        if(pile->getPileEnd() == selectedCard)
+            continue;
+
+        if(validateRelease(pile->getPileEnd(), selectedCard))
+        {
+            for(SPPilable* currPilable = selectedCard; currPilable != nullptr; currPilable = currPilable->getPileChild())
+            {
+                SPCard* currCard = dynamic_cast<SPCard*>(currPilable);
+
+                auto* ghostCard = new SPCard(glm::vec2(0,0), currCard->getSuit(), currCard->getValue(), true, this);
+                pile->addToPile(ghostCard, true);
+                EntityManager::getInstance()->registerEntity(EntityManager::getInstance()->getSceneForEntity(selectedCard), ghostCard);
+                ghostCard->getComponent<SpriteComponent2D>()->setColor4(glm::vec4(0.5, 0.75, 0.5, 0.25));
+                ghostCards.push_back(ghostCard);
+            }
+        }
+    }
+
+    updateLayout();
+}
+
+void SPSnapValidatorFourSuits::clearGhostCards()
+{
+    for(auto it = ghostCards.begin(); it != ghostCards.end(); it++)
+    {
+        (*it)->removeFromPile();
+        EntityManager::getInstance()->deregisterEntity(*it);
+        ghostCards.erase(it--);
+    }
 }

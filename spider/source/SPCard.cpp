@@ -189,13 +189,13 @@ bool SPCard::hasAnimations()
 void SPCard::select()
 {
     SPPilable::select();
-    getComponent<SpriteComponent2D>()->setColor3(glm::vec3(0.75f, 1.0f, .75f));
+//    getComponent<SpriteComponent2D>()->setColor3(glm::vec3(0.75f, 1.0f, .75f));
 }
 
 void SPCard::deselect()
 {
     SPPilable::deselect();
-    getComponent<SpriteComponent2D>()->setColor3(glm::vec3(1.0f, 1.0f, 1.0f));
+//    getComponent<SpriteComponent2D>()->setColor3(glm::vec3(1.0f, 1.0f, 1.0f));
 }
 
 void SPCard::moveTo(glm::vec3 target)
