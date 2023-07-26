@@ -41,7 +41,7 @@ enum InputMode
     IM_GAMEPAD
 };
 
-class SPSnapValidatorFourSuits : public SPSnapValidator, public Entity, public IOptionsReceiver
+class SPSnapValidatorFourSuits : public SPSnapValidator, public Entity, public IOptionsReceiver, public IAnimationCompleteReceiver
 {
     std::vector<MoveEntry> moveList;
 
@@ -102,6 +102,7 @@ private:
     void swapUIGrid();
     void updateGhostCards(SPCard* selectedCard);
     void clearGhostCards();
+    void ghostCardClearComplete(Entity* card);
 };
 
 #endif //SP_SNAP_VALIDATOR_FOUR_SUITS_H

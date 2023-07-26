@@ -213,7 +213,7 @@ void SPCard::moveTo(glm::vec3 target)
     Transform targetTransform = this->transform;
     targetTransform.translate(translation);
 
-    animComp->addAndStart(new TransformAnimation(&transform, targetTransform, 0.3f, this));
+    animComp->addAndStart(new TransformAnimation(this, targetTransform, 0.3f, this));
 }
 
 void SPCard::setSize(glm::vec2 size)

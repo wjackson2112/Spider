@@ -17,6 +17,8 @@
 #include "InputComponent.h"
 
 #include "SpriteComponent2D.h"
+#include "AnimationComponent.h"
+#include "ColorAnimation.h"
 #include "OptionsManager.h"
 
 #include "AssetManager.h"
@@ -1093,9 +1095,13 @@ void SPSnapValidatorFourSuits::updateGhostCards(SPCard* selectedCard)
                 SPCard* currCard = dynamic_cast<SPCard*>(currPilable);
 
                 auto* ghostCard = new SPCard(glm::vec2(0,0), currCard->getSuit(), currCard->getValue(), true, this);
+                auto* ghostSpriteComponent = ghostCard->getComponent<SpriteComponent2D>();
+                auto* ghostAnimationComponent = ghostCard->getComponent<AnimationComponent>();
+
                 pile->addToPile(ghostCard, true);
                 EntityManager::getInstance()->registerEntity(EntityManager::getInstance()->getSceneForEntity(selectedCard), ghostCard);
-                ghostCard->getComponent<SpriteComponent2D>()->setColor4(glm::vec4(0.5, 0.75, 0.5, 0.25));
+                ghostSpriteComponent->setColor4(glm::vec4(0.5f, 0.75f, 0.5f, 0.0f));
+                ghostAnimationComponent->addAndStart(new ColorAnimation(ghostCard, glm::vec4(0.5f, 0.75f, 0.5f, 0.25f), 0.1f));
                 ghostCards.push_back(ghostCard);
             }
         }
@@ -1109,7 +1115,19 @@ void SPSnapValidatorFourSuits::clearGhostCards()
     for(auto it = ghostCards.begin(); it != ghostCards.end(); it++)
     {
         (*it)->removeFromPile();
-        EntityManager::getInstance()->deregisterEntity(*it);
-        ghostCards.erase(it--);
+        glm::vec3 ghostPosition = (*it)->getTransform()->getPosition();
+        (*it)->getTransform()->setPosition(glm::vec3(ghostPosition.x, ghostPosition.y, ghostPosition.z - STACK_OFFSET/2));
+        (*it)->getComponent<AnimationComponent>()->skipAll();
+
+        auto* ghostSpriteComponent = (*it)->getComponent<SpriteComponent2D>();
+        auto* ghostAnimationComponent = (*it)->getComponent<AnimationComponent>();
+        ghostAnimationComponent->addAndStart(new ColorAnimation((*it), glm::vec4(0.5f, 0.75f, 0.5f, 0.0f), 0.1f, this, (AnimCompleteFunction) &SPSnapValidatorFourSuits::ghostCardClearComplete));
     }
 }
+
+void SPSnapValidatorFourSuits::ghostCardClearComplete(Entity* card)
+{
+    EntityManager::getInstance()->deregisterEntity(card);
+    ghostCards.erase(std::remove(ghostCards.begin(), ghostCards.end(), card), ghostCards.end());
+}
+
