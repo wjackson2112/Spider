@@ -6,8 +6,9 @@
 #include "SPMainMenu.h"
 #include "SPScene.h"
 #include "EventManager.h"
+#ifdef USE_STEAMWORKS
 #include "Steamworks.h"
-
+#endif
 
 SPGame::SPGame()
 //        : Game(new MainMenu())
@@ -103,7 +104,9 @@ int main()
     std::cout << "Terminating" << std::endl;
 
     // Terminate
+#ifdef USE_STEAMWORKS
     SteamAPI_Shutdown();
+#endif
     window.close();
     return 0;
 }
