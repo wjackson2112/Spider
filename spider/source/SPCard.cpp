@@ -213,7 +213,7 @@ void SPCard::moveTo(glm::vec3 target)
     Transform targetTransform = this->transform;
     targetTransform.translate(translation);
 
-    animComp->addAndStart(new TransformAnimation(this, targetTransform, 0.3f, this));
+    animComp->addAndStart(new TransformAnimation(this, targetTransform, 0.3f, this, (AnimCompleteFunction) &SPCard::animationComplete));
 }
 
 void SPCard::setSize(glm::vec2 size)
@@ -222,7 +222,7 @@ void SPCard::setSize(glm::vec2 size)
     getComponent<SpriteSheetComponent2D>()->setSize(size);
 }
 
-void SPCard::animationComplete()
+void SPCard::animationComplete(Entity* entity)
 {
     // Turn off updates for face down cards after they're all settled
     if(!getComponent<AnimationComponent>()->hasAnimations() && isFaceDown())
