@@ -1,22 +1,22 @@
 #include <iostream>
 
-#include "Window.h"
-
-#include "SPGame.h"
-#include "SPMainMenu.h"
-#include "SPScene.h"
-#include "EventManager.h"
-#ifdef USE_STEAMWORKS
-#include "Steamworks.h"
-#endif
-
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #define GL_GLEXT_PROTOTYPES
 #define EGL_EGLEXT_PROTOTYPES
 #endif
 
+#include "Window.h"
+
 #include <functional>
+
+#include "SPGame.h"
+#include "SPMainMenu.h"
+#include "SPScene.h"
+#include "EventManager.h"
+//#ifdef USE_STEAMWORKS
+//#include "Steamworks.h"
+//#endif
 
 SPGame::SPGame()
 //        : Game(new MainMenu())
@@ -61,6 +61,8 @@ void SPGame::update()
         shouldReturnToMenu = false;
     }
 
+    std::cout << "Updating" << std::endl;
+
     Game::update();
 }
 
@@ -82,12 +84,18 @@ int main()
 
     SteamClient()->SetWarningMessageHook( &SteamAPIDebugTextHook );
 #endif
+    std::cout << "Starting" << std::endl;
 
     auto window = Window(false);
-    
+
+    std::cout << "Window Created" << std::endl;
+
     SPGame spider = SPGame();
 
+    std::cout << "Game Created" << std::endl;
+
     loop = [&] {
+        std::cout << "Looping" << std::endl;
         spider.draw();
 
         // Double buffer
@@ -95,11 +103,11 @@ int main()
 
         // Poll GL Events
         window.processInput();
-
-#ifdef USE_STEAMWORKS
-        steamworks_sdk.update();
-#endif
-
+//
+//#ifdef USE_STEAMWORKS
+//        steamworks_sdk.update();
+//#endif
+//
         // Update entities
         spider.update();
 

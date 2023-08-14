@@ -13,11 +13,11 @@ SPBackground::SPBackground()
     this->transform.setPosition(glm::vec3(this->transform.getPosition().x,
                                           this->transform.getPosition().y,
                                           -0.3f));
-    Shader shader = AssetManager::getInstance()->loadShader("shaders\\sprite.vert",
-                                                            "shaders\\sprite.frag",
+    Shader shader = AssetManager::getInstance()->loadShader("shaders/sprite.vert",
+                                                            "shaders/sprite.frag",
                                                             nullptr,
                                                             "sprite");
-    Texture2D texture = AssetManager::getInstance()->loadTexture("assets\\green_felt.png", true, "green_felt");
+    Texture2D texture = AssetManager::getInstance()->loadTexture("assets/green_felt.png", true, "green_felt");
     glm::vec2 viewportRes = OptionsManager::getInstance()->getViewportResolution();
     auto* spriteComponent = new SpriteComponent2D(shader, texture, viewportRes);
     addComponent(spriteComponent);
