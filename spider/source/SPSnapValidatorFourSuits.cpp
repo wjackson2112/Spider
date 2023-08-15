@@ -44,11 +44,11 @@ SPSnapValidatorFourSuits::SPSnapValidatorFourSuits()
     if(pilePeeker)
     {
         std::string text = "0.0";
-        Shader textShader = AssetManager::getInstance()->loadShader("shaders\\text.vert",
-                                                                    "shaders\\text.frag",
+        Shader textShader = AssetManager::getInstance()->loadShader("shaders/text.vert",
+                                                                    "shaders/text.frag",
                                                                     nullptr,
                                                                     text);
-        TextFont textFont = AssetManager::getInstance()->loadTextFont("assets\\arial.ttf",
+        TextFont textFont = AssetManager::getInstance()->loadTextFont("assets/arial.ttf",
                                                                       "arial18", 18);
         auto* textComponent = new TextComponent(textShader, textFont, text);
         textComponent->setColor(glm::vec3(1.0f, 0.0f, 0.0f));

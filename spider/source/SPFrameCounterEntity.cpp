@@ -10,11 +10,11 @@
 SPFrameCounterEntity::SPFrameCounterEntity()
 {
     std::string text = "0.0";
-    Shader textShader = AssetManager::getInstance()->loadShader("shaders\\text.vert",
-                                                                "shaders\\text.frag",
+    Shader textShader = AssetManager::getInstance()->loadShader("shaders/text.vert",
+                                                                "shaders/text.frag",
                                                                 nullptr,
                                                                 text);
-    TextFont textFont = AssetManager::getInstance()->loadTextFont("assets\\arial.ttf",
+    TextFont textFont = AssetManager::getInstance()->loadTextFont("assets/arial.ttf",
                                                                   "arial12", 12);
     auto* textComponent = new TextComponent(textShader, textFont, text);
 

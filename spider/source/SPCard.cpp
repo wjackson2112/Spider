@@ -29,12 +29,12 @@ SPCard::SPCard(glm::vec2 position, SPCardSuit suit, SPCardValue value, bool face
 {
     this->transform.setPosition2(position);
 
-    Shader shader = AssetManager::getInstance()->loadShader("shaders\\sprite.vert",
-                                                            "shaders\\sprite.frag",
+    Shader shader = AssetManager::getInstance()->loadShader("shaders/sprite.vert",
+                                                            "shaders/sprite.frag",
                                                             nullptr,
                                                             "sprite");
     // Original deck asset is from here: https://www.codeproject.com/Articles/1187548/Video-Poker
-    Texture2D texture = AssetManager::getInstance()->loadTexture("assets\\deck+backs.png", true, "deck");
+    Texture2D texture = AssetManager::getInstance()->loadTexture("assets/deck+backs.png", true, "deck");
 
     SpriteSheetComponent2D* spriteComponent;
     if(faceUp)

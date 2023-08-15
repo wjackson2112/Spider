@@ -23,12 +23,12 @@ SPPile::SPPile(glm::vec2 position, glm::vec3 inRootOffset, glm::vec3 inPileOffse
 
     this->transform.setPosition2(position);
 
-    Shader shader = AssetManager::getInstance()->loadShader("shaders\\sprite.vert",
-                                                            "shaders\\sprite.frag",
+    Shader shader = AssetManager::getInstance()->loadShader("shaders/sprite.vert",
+                                                            "shaders/sprite.frag",
                                                             nullptr,
                                                             "sprite");
     // Deck asset is from here: https://www.codeproject.com/Articles/1187548/Video-Poker
-    Texture2D texture = AssetManager::getInstance()->loadTexture("assets\\pile_border.png", true, "pile_border");
+    Texture2D texture = AssetManager::getInstance()->loadTexture("assets/pile_border.png", true, "pile_border");
 
     auto* spriteComponent = new SpriteComponent2D(shader, texture, size);
     addComponent(spriteComponent);

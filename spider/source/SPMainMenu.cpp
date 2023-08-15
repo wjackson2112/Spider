@@ -24,9 +24,9 @@ SPMainMenu::SPMainMenu()
     entityManager->registerEntity(this, new SPBackground());
     std::cout << "Registered Background" << std::endl;
     entityManager->registerEntity(this, new MenuButton(glm::vec2(50,50), glm::vec2(275, 50),
-                                                       "assets\\block.png", "New Game", NEW_GAME));
+                                                       "assets/block.png", "New Game", NEW_GAME));
     std::cout << "Registered New Game" << std::endl;
     entityManager->registerEntity(this, new MenuButton(glm::vec2(50,125), glm::vec2(275, 50),
-                                                       "assets\\block.png", "Quit Game", QUIT_GAME));
+                                                       "assets/block.png", "Quit Game", QUIT_GAME));
     std::cout << "Registered Quit Game" << std::endl;
 }
