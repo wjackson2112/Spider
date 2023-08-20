@@ -15,10 +15,10 @@ SPFrameCounterEntity::SPFrameCounterEntity()
                                                                 nullptr,
                                                                 text);
     TextFont textFont = AssetManager::getInstance()->loadTextFont("assets/arial.ttf",
-                                                                  "arial12", 12);
+                                                                  "arial48", 48);
     auto* textComponent = new TextComponent(textShader, textFont, text);
 
-    textComponent->setColor(glm::vec3(.25f, .25f, .5f));
+    textComponent->setColor(glm::vec3(1.0f, .0f, .0f));
     textComponent->setTransform(glm::vec3(0.f, 0.f, 0.2f));
     addComponent(textComponent);
 

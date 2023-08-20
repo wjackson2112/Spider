@@ -19,8 +19,8 @@ SPScene::SPScene()
     EntityManager* entityManager = EntityManager::getInstance();
     entityManager->registerEntity(this, new CameraEntity2D());
     entityManager->registerEntity(this, new SPBackground());
-
     entityManager->registerEntity(this, new SPFrameCounterEntity());
+
     auto validator = new SPSnapValidatorFourSuits();
 
     validator->initialSetup(this);

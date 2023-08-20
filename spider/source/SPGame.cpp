@@ -83,7 +83,7 @@ int main()
     SteamClient()->SetWarningMessageHook( &SteamAPIDebugTextHook );
 #endif
 
-    auto window = Window(false);
+    auto window = Window();
     
     SPGame spider = SPGame();
 
