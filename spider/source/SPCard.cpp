@@ -7,7 +7,7 @@
 #include <iostream>
 
 #include "AssetManager.h"
-#include "EntityManager.h"
+//#include "EntityManager.h"
 //#include "TextComponent.h"
 #include "SpriteSheetComponent2D.h"
 #include "CollisionComponent2DAABB.h"
@@ -34,13 +34,16 @@ SPCard::SPCard(glm::vec2 position, SPCardSuit suit, SPCardValue value, bool face
                                                             nullptr,
                                                             "sprite");
     // Original deck asset is from here: https://www.codeproject.com/Articles/1187548/Video-Poker
-    Texture2D texture = AssetManager::getInstance()->loadTexture("assets/deck+backs.png", true, "deck");
+    std::string assetName = cardValueStrings[value] + "_of_" + cardSuitStrings[suit] + ".png";
+    std::cout << assetName << std::endl;
+    Texture2D texture = AssetManager::getInstance()->loadTexture(("assets/cards/" + assetName).c_str(), true, assetName);
+    Texture2D textureBack = AssetManager::getInstance()->loadTexture("assets/card_back.png", true, "card_back.png");
 
-    SpriteSheetComponent2D* spriteComponent;
-    if(faceUp)
-        spriteComponent = new SpriteSheetComponent2D(shader, texture, size, glm::vec2(14, 4), glm::vec2(value, suit));
-    else
-        spriteComponent = new SpriteSheetComponent2D(shader, texture, size, glm::vec2(14, 4), glm::vec2(CARD_BACK_X_INDEX, color));
+    SpriteComponent2D* spriteComponent = new SpriteComponent2D(shader, texture, size);
+
+    if(!faceUp)
+        spriteComponent->setTexture(textureBack);
+
     addComponent(spriteComponent);
 
     auto* animationComponent = new AnimationComponent();
@@ -73,8 +76,9 @@ SPPilable* SPCard::getClosestOverlap()
     SPPilable *bestPilable = nullptr;
     float bestArea = 0.0f;
 
-    EntityManager* entityManager = EntityManager::getInstance();
-    std::vector<Entity*> entities = entityManager->getEntitiesInScene(entityManager->getSceneForEntity(this));
+//    EntityManager* entityManager = EntityManager::getInstance();
+//    std::vector<Entity*> entities = entityManager->getEntitiesInScene(entityManager->getSceneForEntity(this));
+    std::vector<Entity*> entities = owningScene->getEntities();
     for(Entity* entity : entities)
     {
         if(SPPilable* newPilable = dynamic_cast<SPPilable*>(entity))
@@ -149,8 +153,9 @@ bool SPCard::isTopmostAtPoint(glm::vec2 point)
     if(!containsPoint(point))
         return false;
 
-    EntityManager* entityManager = EntityManager::getInstance();
-    std::vector<Entity*> entities = entityManager->getEntitiesInScene(entityManager->getSceneForEntity(this));
+//    EntityManager* entityManager = EntityManager::getInstance();
+//    std::vector<Entity*> entities = entityManager->getEntitiesInScene(entityManager->getSceneForEntity(this));
+    std::vector<Entity*>entities = owningScene->getEntities();
     for(Entity* entity : entities)
     {
         if (SPCard *otherCard = dynamic_cast<SPCard *>(entity))
@@ -175,15 +180,18 @@ void SPCard::flip()
     if(isFaceUp())
         receivesUpdates = true;
 
+    std::string assetName = cardValueStrings[value] + "_of_" + cardSuitStrings[suit] + ".png";
+    Texture2D texture = AssetManager::getInstance()->getTexture(assetName);
+    Texture2D textureBack = AssetManager::getInstance()->getTexture("card_back.png");
+
     if(faceUp)
-        getComponent<SpriteSheetComponent2D>()->setSprite(glm::vec2(value, suit));
+        getComponent<SpriteComponent2D>()->setTexture(texture);
     else
-        getComponent<SpriteSheetComponent2D>()->setSprite(glm::vec2(CARD_BACK_X_INDEX, color));
+        getComponent<SpriteComponent2D>()->setTexture(textureBack);
 };
 
-bool SPCard::hasAnimations()
-{
-    return getComponent<AnimationComponent>()->hasAnimations();
+bool SPCard::hasUnfinishedAnimations() {
+    return getComponent<AnimationComponent>()->hasUnfinishedAnimations();
 }
 
 void SPCard::select()
@@ -213,13 +221,13 @@ void SPCard::moveTo(glm::vec3 target)
     Transform targetTransform = this->transform;
     targetTransform.translate(translation);
 
-    animComp->addAndStart(new TransformAnimation(this, targetTransform, 0.3f, this, (AnimCompleteFunction) &SPCard::animationComplete));
+    animComp->addAndStart<TransformAnimation>(this, targetTransform, 0.3f, this, (AnimCompleteFunction) &SPCard::animationComplete);
 }
 
 void SPCard::setSize(glm::vec2 size)
 {
     this->size = size;
-    getComponent<SpriteSheetComponent2D>()->setSize(size);
+    getComponent<SpriteComponent2D>()->setSize(size);
 }
 
 void SPCard::animationComplete(Entity* entity)

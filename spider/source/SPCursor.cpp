@@ -44,7 +44,7 @@ void SPCursor::enable()
     glm::vec4 targetColor = glm::vec4(origColor.x, origColor.y, origColor.z, 1.0f);
 
     animationComponent->skipAll();
-    animationComponent->addAndStart(new ColorAnimation(this, targetColor, .1f));
+    animationComponent->addAndStart<ColorAnimation>(this, targetColor, .1f);
 }
 
 void SPCursor::disable()
@@ -61,5 +61,5 @@ void SPCursor::disable()
     glm::vec4 targetColor = glm::vec4(origColor.x, origColor.y, origColor.z, 0.0f);
 
     animationComponent->skipAll();
-    animationComponent->addAndStart(new ColorAnimation(this, targetColor, .1f));
+    animationComponent->addAndStart<ColorAnimation>(this, targetColor, .1f);
 }

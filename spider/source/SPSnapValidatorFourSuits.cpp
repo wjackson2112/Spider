@@ -10,7 +10,7 @@
 #include "SPCard.h"
 #include "SPPile.h"
 #include "SPCursor.h"
-#include "EntityManager.h"
+//#include "EntityManager.h"
 #include "EventManager.h"
 
 #include "InputManager.h"
@@ -28,7 +28,7 @@
 #include <sstream>
 #include <cstdlib>
 
-bool pilePeeker = true;
+bool pilePeeker = false;
 
 
 SPSnapValidatorFourSuits::SPSnapValidatorFourSuits()
@@ -117,40 +117,41 @@ void SPSnapValidatorFourSuits::undoDeal()
 
 void SPSnapValidatorFourSuits::initialSetup(Scene *scene)
 {
-    EntityManager* entityManager = EntityManager::getInstance();
+//    EntityManager* entityManager = EntityManager::getInstance();
 
     // Two full decks of cards
     std::vector<SPCard*> cardSet;
     for(int deckNum = 0; deckNum < 8; deckNum++)
     {
-//        for(int suit = SPSUIT_MIN; suit < SPSUIT_MAX; suit++)
+//        for(int suit = SPSUIT_MIN; suit <= SPSUIT_MAX; suit++)
 //        {
-            for(int value = SPVALUE_MIN; value < SPVALUE_MAX; value++)
+            for(int value = SPVALUE_MIN; value <= SPVALUE_MAX; value++)
             {
 //                SPCard* newCard = new SPCard(glm::vec2(10.f, 10.f), (SPCardSuit) suit, (SPCardValue) value, false, this);
-                SPCard* newCard = new SPCard(glm::vec2(10.f, 10.f), SPSUIT_SPADE, (SPCardValue) value, false, this);
+//                SPCard* newCard = new SPCard();
 
-                entityManager->registerEntity(scene, newCard);
+//                entityManager->registerEntity(scene, newCard);
+                auto* newCard = scene->addEntity<SPCard>(glm::vec2(10.f, 10.f), SPSUIT_SPADE, (SPCardValue) value, false, this);
                 cardSet.push_back(newCard);
             }
 //        }
     }
-    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
-    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
-    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
-    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
-    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
-    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
-    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
+//    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
+//    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
+//    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
+//    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
+//    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
+//    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
+//    std::shuffle(std::begin(cardSet), std::end(cardSet), rng);
 
     for(int i = 0; i < 10; i++)
     {
-        SPPile* pile = new SPPile(glm::vec2(10.f + (i * 55.f), 100.f),
+        auto* pile = scene->addEntity<SPPile>(glm::vec2(10.f + (i * 55.f), 100.f),
                                   glm::vec3(0.0f, 0.0f, STACK_OFFSET),
                                   glm::vec3(0.0f, 20.0f, STACK_OFFSET),
                                   false, this);
         playPiles.push_back(pile);
-        entityManager->registerEntity(scene, pile);
+//        entityManager->registerEntity(scene, pile);
     }
 
     // Four face down rows
@@ -182,12 +183,12 @@ void SPSnapValidatorFourSuits::initialSetup(Scene *scene)
     // 8 "out of play" piles
     for(int i = 0; i < 8; i++)
     {
-        SPPile* pile = new SPPile(glm::vec2(100.f + (i * 55.f), 10.f),
+        auto* pile = scene->addEntity<SPPile>(glm::vec2(100.f + (i * 55.f), 10.f),
                                   glm::vec3(0.0f, 0.0f, STACK_OFFSET),
                                   glm::vec3(0.0f, 0.0f, STACK_OFFSET),
                                   false, this);
         outPiles.push_back(pile);
-        entityManager->registerEntity(scene, pile);
+//        entityManager->registerEntity(scene, pile);
     }
 
     // Put the rest of the cards into the deck
@@ -202,8 +203,8 @@ void SPSnapValidatorFourSuits::initialSetup(Scene *scene)
         cardSet.pop_back();
     }
 
-    gamepadCursor = new SPCursor(playPiles[0]->getPileEnd(), glm::vec2(5.0f, 5.0f));
-    entityManager->registerEntity(scene, gamepadCursor);
+    gamepadCursor = scene->addEntity<SPCursor>(playPiles[0]->getPileEnd(), glm::vec2(5.0f, 5.0f));
+//    entityManager->registerEntity(scene, gamepadCursor);
 
     updateLayout();
     updateUnselectedUIGrid();
@@ -492,12 +493,12 @@ void SPSnapValidatorFourSuits::undo()
 
 SPCard* SPSnapValidatorFourSuits::getTopmostCardAtPosition(glm::vec2 position)
 {
-    EntityManager* entityManager = EntityManager::getInstance();
-    std::vector<Entity*> entities = entityManager->getEntitiesInScene(entityManager->getSceneForEntity(this));
-
+//    EntityManager* entityManager = EntityManager::getInstance();
+//    std::vector<Entity*> entities = entityManager->getEntitiesInScene(entityManager->getSceneForEntity(this));
+    std::vector<Entity*> entities = owningScene->getEntities();
     for(Entity* entity : entities)
     {
-        SPCard* card = dynamic_cast<SPCard*>(entity);
+        auto* card = dynamic_cast<SPCard*>(entity);
         if(!card)
             continue;
 
@@ -829,11 +830,12 @@ void SPSnapValidatorFourSuits::update(float deltaTime)
     {
         std::stringstream stream;
 
-        EntityManager* entityManager = EntityManager::getInstance();
+//        EntityManager* entityManager = EntityManager::getInstance();
 
         // Get all cards under the mouse cursor
         std::vector<SPCard*> cardsUnderPoint;
-        for(Entity* entity : entityManager->getEntitiesInScene(entityManager->getSceneForEntity(this)))
+        std::vector<Entity*> entities = owningScene->getEntities();
+        for(Entity* entity : entities)
             if(SPCard* card = dynamic_cast<SPCard*>(entity))
                 if(card->containsPoint(lastMousePosition))
                     cardsUnderPoint.push_back(card);
@@ -862,7 +864,7 @@ void SPSnapValidatorFourSuits::update(float deltaTime)
 
 void SPSnapValidatorFourSuits::reportAnimationComplete(SPPilable *pilable)
 {
-    SPSnapValidatorFourSuits::alignPile(pilable);
+//    SPSnapValidatorFourSuits::alignPile(pilable);
 
     if(pilable->isSelected())
         pilable->deselect();
@@ -941,7 +943,7 @@ void SPSnapValidatorFourSuits::handleCompleteSuitIfFound(SPPilable *pilable)
                 return;
 
             // Cards are still moving, wait until everything is settled
-            if(currCard != pilable && currCard->hasAnimations())
+            if(currCard != pilable && currCard->hasUnfinishedAnimations())
                 return;
 
             if(currCard->getValue() == SPVALUE_ACE)
@@ -1092,16 +1094,17 @@ void SPSnapValidatorFourSuits::updateGhostCards(SPCard* selectedCard)
         {
             for(SPPilable* currPilable = selectedCard; currPilable != nullptr; currPilable = currPilable->getPileChild())
             {
-                SPCard* currCard = dynamic_cast<SPCard*>(currPilable);
+                auto* currCard = dynamic_cast<SPCard*>(currPilable);
 
-                auto* ghostCard = new SPCard(glm::vec2(0,0), currCard->getSuit(), currCard->getValue(), true, this);
+//                auto* ghostCard = new SPCard(glm::vec2(0,0), currCard->getSuit(), currCard->getValue(), true, this);
+                auto* ghostCard = owningScene->addEntity<SPCard>(glm::vec2(0,0), currCard->getSuit(), currCard->getValue(), true, this);
                 auto* ghostSpriteComponent = ghostCard->getComponent<SpriteComponent2D>();
                 auto* ghostAnimationComponent = ghostCard->getComponent<AnimationComponent>();
 
                 pile->addToPile(ghostCard, true);
-                EntityManager::getInstance()->registerEntity(EntityManager::getInstance()->getSceneForEntity(selectedCard), ghostCard);
+//                EntityManager::getInstance()->registerEntity(EntityManager::getInstance()->getSceneForEntity(selectedCard), ghostCard);
                 ghostSpriteComponent->setColor4(glm::vec4(0.5f, 0.75f, 0.5f, 0.0f));
-                ghostAnimationComponent->addAndStart(new ColorAnimation(ghostCard, glm::vec4(0.5f, 0.75f, 0.5f, 0.25f), 0.1f));
+                ghostAnimationComponent->addAndStart<ColorAnimation>(ghostCard, glm::vec4(0.5f, 0.75f, 0.5f, 0.25f), 0.1f);
                 ghostCards.push_back(ghostCard);
             }
         }
@@ -1121,13 +1124,13 @@ void SPSnapValidatorFourSuits::clearGhostCards()
 
         auto* ghostSpriteComponent = (*it)->getComponent<SpriteComponent2D>();
         auto* ghostAnimationComponent = (*it)->getComponent<AnimationComponent>();
-        ghostAnimationComponent->addAndStart(new ColorAnimation((*it), glm::vec4(0.5f, 0.75f, 0.5f, 0.0f), 0.1f, this, (AnimCompleteFunction) &SPSnapValidatorFourSuits::ghostCardClearComplete));
+        ghostAnimationComponent->addAndStart<ColorAnimation>((*it), glm::vec4(0.5f, 0.75f, 0.5f, 0.0f), 0.1f, this, (AnimCompleteFunction) &SPSnapValidatorFourSuits::ghostCardClearComplete);
     }
 }
 
 void SPSnapValidatorFourSuits::ghostCardClearComplete(Entity* card)
 {
-    EntityManager::getInstance()->deregisterEntity(card);
+//    EntityManager::getInstance()->deregisterEntity(card);
     ghostCards.erase(std::remove(ghostCards.begin(), ghostCards.end(), card), ghostCards.end());
 }
 

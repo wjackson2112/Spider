@@ -19,7 +19,7 @@ enum SPCardBackColor
     SPBACK_RED,
     SPBACK_GREEN,
     SPBACK_PURPLE,
-    SPBACK_MAX
+    SPBACK_MAX=SPBACK_PURPLE
 };
 
 enum SPCardSuit
@@ -29,7 +29,14 @@ enum SPCardSuit
     SPSUIT_DIAMOND,
     SPSUIT_SPADE,
     SPSUIT_HEART,
-    SPSUIT_MAX
+    SPSUIT_MAX=SPSUIT_HEART
+};
+
+const std::string cardSuitStrings[6] = {
+        "clubs",
+        "diamonds",
+        "spades",
+        "hearts"
 };
 
 enum SPCardValue
@@ -48,7 +55,23 @@ enum SPCardValue
     SPVALUE_JACK,
     SPVALUE_QUEEN,
     SPVALUE_KING,
-    SPVALUE_MAX
+    SPVALUE_MAX=SPVALUE_KING
+};
+
+const std::string cardValueStrings[15] = {
+        "ace",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "jack",
+        "queen",
+        "king"
 };
 
 class SPCard : public SPPilable, public IAnimationCompleteReceiver
@@ -69,7 +92,6 @@ public:
     SPCardSuit getSuit() { return suit; }
     SPCardValue getValue() { return value; }
 
-public:
     SPPilable* getClosestOverlap();
     bool containsPoint(glm::vec2 point);
     bool isTopmostAtPoint(glm::vec2 point);
@@ -78,7 +100,7 @@ public:
     void flip();
     bool isFaceUp() { return faceUp; }
     bool isFaceDown() { return !isFaceUp(); }
-    bool hasAnimations();
+    bool hasUnfinishedAnimations();
 
     void select();
     void deselect();

@@ -10,21 +10,26 @@
 #include "TextComponent.h"
 #include "AssetManager.h"
 
-#include "EntityManager.h"
+//#include "EntityManager.h"
 #include "CameraEntity2D.h"
 #include "SPFrameCounterEntity.h"
 
 SPScene::SPScene()
 {
-    EntityManager* entityManager = EntityManager::getInstance();
-    entityManager->registerEntity(this, new CameraEntity2D());
-    entityManager->registerEntity(this, new SPBackground());
-    entityManager->registerEntity(this, new SPFrameCounterEntity());
-
-    auto validator = new SPSnapValidatorFourSuits();
-
+//    EntityManager* entityManager = EntityManager::getInstance();
+    addEntity<CameraEntity2D>();
+    addEntity<SPBackground>();
+    addEntity<SPFrameCounterEntity>();
+    auto validator = addEntity<SPSnapValidatorFourSuits>();
     validator->initialSetup(this);
-
-    // TODO: This currently has to go last to avoid weird depth on the text, fix rendering so this doesn't happen
-    entityManager->registerEntity(this, validator);
+//    entityManager->registerEntity(this, new CameraEntity2D());
+//    entityManager->registerEntity(this, new SPBackground());
+//    entityManager->registerEntity(this, new SPFrameCounterEntity());
+//
+//    auto validator = new SPSnapValidatorFourSuits();
+//
+//    validator->initialSetup(this);
+//
+//    // TODO: This currently has to go last to avoid weird depth on the text, fix rendering so this doesn't happen
+//    entityManager->registerEntity(this, validator);
 }
