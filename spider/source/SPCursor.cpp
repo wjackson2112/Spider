@@ -22,6 +22,9 @@ SPCursor::SPCursor(Entity* target, glm::vec2 offset)
 
     SpriteComponent2D* spriteComponent;
     spriteComponent = new SpriteComponent2D(shader, texture, glm::vec2(30, 30));
+
+    glm::vec4 origColor = spriteComponent->color;
+    spriteComponent->setColor4(glm::vec4(origColor.x, origColor.y, origColor.z, 0.0f));
     addComponent(spriteComponent);
 
     auto* animationComponent = new AnimationComponent();

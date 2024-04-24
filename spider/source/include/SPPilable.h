@@ -15,8 +15,11 @@
 class SPPilable : public Entity
 {
 protected:
+    SPPilable* pileRoot = nullptr;
+    SPPilable* pilePrevParent = nullptr;
     SPPilable* pileParent = nullptr;
     SPPilable* pileChild = nullptr;
+    SPPilable* pileEnd = nullptr;
 
     bool selected = false;
 
@@ -26,6 +29,8 @@ protected:
     glm::vec3 initialPileOffset = glm::vec3(0.0f, 0.0f, STACK_OFFSET);
 
 public:
+    SPPilable();
+
     glm::vec3 getRootOffset();
     glm::vec3 getPileOffset();
 
@@ -40,7 +45,17 @@ public:
 
     SPPilable* getPileRoot();
     SPPilable* getPileEnd();
+
+    void updatePileRoot(SPPilable* pilable);
+    void updatePileEnd(SPPilable* pilable);
+
+private:
+    void updatePileRootRecurse(SPPilable* pilable);
+    void updatePileEndRecurse(SPPilable* pilable);
+public:
+
     SPPilable* getPileParent() { return pileParent; }
+    SPPilable* getPilePrevParent() { return pilePrevParent; }
     SPPilable* getPileChild() { return pileChild; }
 
     void raiseToFront();

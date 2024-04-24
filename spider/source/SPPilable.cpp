@@ -4,6 +4,15 @@
 
 #include "SPPilable.h"
 
+SPPilable::SPPilable()
+{
+    pileRoot = this;
+    pileParent = nullptr;
+    pilePrevParent = nullptr;
+    pileChild = nullptr;
+    pileEnd = this;
+}
+
 glm::vec3 SPPilable::getRootOffset()
 {
     return getPileRoot()->rootOffset;
@@ -26,16 +35,57 @@ glm::vec3 SPPilable::getInitialPileOffset()
 
 SPPilable* SPPilable::getPileRoot()
 {
-    if(!pileParent)
-        return this;
+//    if(!pileRoot)
+//    {
+//        if (!pileParent)
+//            pileRoot = this;
+//        else
+//            pileRoot = pileParent->getPileRoot();
+//    }
 
-    return pileParent->getPileRoot();
+    return pileRoot;
 }
 
-SPPilable *SPPilable::getPileEnd() {
-    if(!pileChild)
-        return this;
-    return pileChild->getPileEnd();
+SPPilable* SPPilable::getPileEnd()
+{
+//    if(!pileEnd) {
+//        if (!pileChild)
+//            pileEnd = this;
+//        else
+//            pileEnd = pileChild->getPileEnd();
+//    }
+
+    return pileEnd;
+}
+
+void SPPilable::updatePileRoot(SPPilable* pilable)
+{
+    if(this != pileEnd)
+        pileEnd->updatePileRoot(pilable);
+    else
+        this->updatePileRootRecurse(pilable);
+}
+
+void SPPilable::updatePileRootRecurse(SPPilable *pilable)
+{
+    pileRoot = pilable;
+    if(pileParent)
+        pileParent->updatePileRootRecurse(pilable);
+}
+
+void SPPilable::updatePileEnd(SPPilable* pilable)
+{
+    if(this != pileRoot)
+        pileRoot->updatePileEnd(pilable);
+    else
+        this->updatePileEndRecurse(pilable);
+}
+
+void SPPilable::updatePileEndRecurse(SPPilable *pilable)
+{
+    pileEnd = pilable;
+    if(pileChild)
+        pileChild->updatePileEndRecurse(pilable);
 }
 
 void SPPilable::raiseToFront()
@@ -46,55 +96,59 @@ void SPPilable::raiseToFront()
 
 void SPPilable::addToPile(SPPilable *pilable, bool snap)
 {
-    SPPilable* pileEnd = getPileEnd();
-    SPPilable* pileRoot = getPileRoot();
-
     pilable->removeFromPile();
 
-    if(this == pileEnd)
+    if(this != getPileEnd())
     {
-        glm::vec3 currWorldPosition = pilable->getWorldTransform().getPosition();
-        pileChild = pilable;
-        pilable->pileParent = this;
-        addChild(pilable);
+        pileEnd->addToPile(pilable, snap);
+        return;
+    }
 
-        // Attach to the pile without moving the card
-        glm::vec3 attachedWorldPosition = pilable->getWorldTransform().getPosition();
-        glm::vec3 worldPositionDifference = attachedWorldPosition - currWorldPosition;
-        pilable->getTransform()->translate(-worldPositionDifference);
+    // if(this == pileEnd)
+    glm::vec3 currWorldPosition = pilable->getWorldTransform().getPosition();
 
-        // Move the card to the target location
-        if(pilable->getPileParent() == pileRoot)
-        {
-            if(snap)
-                pilable->snapTo(getRootOffset());
-            else
-                pilable->moveTo(getRootOffset());
-        }
+    pileChild = pilable;
+    updatePileEnd(pileChild->getPileEnd());
+
+    if(pilable->pileParent)
+        pilable->pilePrevParent = pilable->pileParent;
+
+    pilable->pileParent = this;
+    updatePileRoot(pileRoot);
+
+    addChild(pilable);
+
+    // Attach to the pile without moving the card
+    glm::vec3 attachedWorldPosition = pilable->getWorldTransform().getPosition();
+    glm::vec3 worldPositionDifference = attachedWorldPosition - currWorldPosition;
+    pilable->getTransform()->translate(-worldPositionDifference);
+
+    // Move the card to the target location
+    if(pilable->getPileParent() == pileRoot)
+    {
+        if(snap)
+            pilable->snapTo(getRootOffset());
         else
-        {
-            if(snap)
-                pilable->snapTo(getPileOffset());
-            else
-                pilable->moveTo(getPileOffset());
-        }
-
-        SPPilable* currPilable = pilable->getPileChild();
-        while(currPilable != nullptr)
-        {
-
-            // Move the card to the target location
-            if(currPilable->getPileParent() == pileRoot)
-                currPilable->moveTo(getRootOffset());
-            else
-                currPilable->moveTo(getPileOffset());
-
-            currPilable = currPilable->getPileChild();
-        }
+            pilable->moveTo(getRootOffset());
     }
     else
     {
-        pileChild->addToPile(pilable, snap);
+        if(snap)
+            pilable->snapTo(getPileOffset());
+        else
+            pilable->moveTo(getPileOffset());
+    }
+
+    SPPilable* currPilable = pilable->getPileChild();
+    while(currPilable != nullptr)
+    {
+        // Move the card to the target location
+        if(currPilable->getPileParent() == pileRoot)
+            currPilable->moveTo(getRootOffset());
+        else
+            currPilable->moveTo(getPileOffset());
+
+        currPilable = currPilable->getPileChild();
     }
 }
 
@@ -117,8 +171,13 @@ void SPPilable::removeFromPile()
     Transform worldTransform = this->getWorldTransform();
 
     pileParent->removeChild(this);
-    pileParent->pileChild= nullptr;
+    pileParent->pileChild = nullptr;
+    pileParent->pileEnd = pileParent;
+    pileParent->updatePileEnd(pileParent);
+    if(pileParent)
+        pilePrevParent = pileParent;
     pileParent = nullptr;
+    pileRoot = this;
 
     transform = worldTransform;
 }

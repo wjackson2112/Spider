@@ -4,6 +4,8 @@ add_executable(Spider source/SPGame.cpp
                       source/SPBackground.cpp
                       source/SPScene.cpp
                       source/SPCard.cpp
+                      source/SPGameplayAction.cpp
+                      source/SPSelectAction.cpp
                       source/SPSnapValidatorFourSuits.cpp
                       source/SPPile.cpp
                       source/SPPilable.cpp

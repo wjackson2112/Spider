@@ -41,18 +41,28 @@ enum InputMode
     IM_GAMEPAD
 };
 
+struct SPGameState
+{
+    Scene* owningScene = nullptr;
+    std::vector<SPPile*> tableaus;
+    std::vector<SPPile*> foundations;
+    SPPile* stock;
+
+    SPCard* grabbedCard = nullptr;
+    glm::vec2 grabStartPosition = NO_GRAB;
+    glm::vec2 grabOffset = NO_GRAB;
+
+    std::vector<MoveEntry> moveList;
+};
+
 class SPSnapValidatorFourSuits : public SPSnapValidator, public Entity, public IOptionsReceiver, public IAnimationCompleteReceiver
 {
-    std::vector<MoveEntry> moveList;
-
     std::random_device rd = std::random_device {};
     std::default_random_engine rng = std::default_random_engine {rd()};
 
     std::vector<SPCard*> ghostCards;
 
-    std::vector<SPPile*> playPiles;
-    std::vector<SPPile*> outPiles;
-    SPPile* deck;
+    SPGameState gameState;
     SPCursor* gamepadCursor;
 
     UIGrid unselectedUIGrid;
@@ -81,8 +91,8 @@ public:
 
     void reportClick(SPPilable* pilable);
 
-    bool validateGrab(SPPilable* parent, SPPilable* child);
-    void reportGrab(SPPilable* parent, SPPilable* child);
+//    bool validateGrab(SPPilable* parent, SPPilable* child);
+//    void reportGrab(SPPilable* parent, SPPilable* child);
 
     bool validateRelease(SPPilable* parent, SPPilable* child);
     void reportRelease(SPPilable* parent, SPPilable* child);
