@@ -6,7 +6,6 @@
 #define SP_MAIN_MENU_H
 
 #include "Scene.h"
-#include "IInputReceiver.h"
 
 class SPMainMenu : public Scene
 {

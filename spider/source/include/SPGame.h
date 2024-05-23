@@ -6,7 +6,6 @@
 #define SP_GAME_H
 
 #include "Game.h"
-#include "IInputReceiver.h"
 #include "IEventReceiver.h"
 
 class SPGame : public Game, IEventReceiver

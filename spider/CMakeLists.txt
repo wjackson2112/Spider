@@ -4,13 +4,16 @@ add_executable(Spider source/SPGame.cpp
                       source/SPBackground.cpp
                       source/SPScene.cpp
                       source/SPCard.cpp
-                      source/SPGameplayAction.cpp
-                      source/SPSelectAction.cpp
                       source/SPSnapValidatorFourSuits.cpp
                       source/SPPile.cpp
                       source/SPPilable.cpp
                       source/SPFrameCounterEntity.cpp
-                      source/SPCursor.cpp)
+                      source/SPCursor.cpp
+                      source/SPGameplayAction.cpp
+                      source/SPSelectAction.cpp
+                      source/SPDealAction.cpp
+                      source/SPCancelAction.cpp
+                      source/SPUndoAction.cpp)
 
 target_include_directories(Spider
                            PUBLIC

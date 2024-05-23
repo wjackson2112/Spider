@@ -9,8 +9,10 @@
 
 #include "Entity.h"
 #include "IAnimationCompleteReceiver.h"
-#include "SPSnapValidator.h"
+//#include "SPSnapValidatorFourSuits.h"
 #include "SPPilable.h"
+
+class SPGameState;
 
 enum SPCardBackColor
 {
@@ -81,12 +83,12 @@ class SPCard : public SPPilable, public IAnimationCompleteReceiver
     SPCardBackColor color;
     bool faceUp = true;
 
-    SPSnapValidator* validator;
+    SPGameState* gameState;
 
     glm::vec2 size;
 
 public:
-    SPCard(glm::vec2 position, SPCardSuit suit, SPCardValue value, bool faceUp, SPSnapValidator* validator);
+    SPCard(glm::vec2 position, SPCardSuit suit, SPCardValue value, bool faceUp, SPGameState* gameState);
     ~SPCard();
 
     SPCardSuit getSuit() { return suit; }

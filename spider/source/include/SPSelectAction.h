@@ -2,22 +2,28 @@
 // Created by Will on 4/7/2024.
 //
 
-#ifndef SP_GRAB_ACTION_H
-#define SP_GRAB_ACTION_H
+#ifndef SP_SELECT_ACTION_H
+#define SP_SELECT_ACTION_H
 
 #include "SPGameplayAction.h"
-#include "SPSnapValidatorFourSuits.h"
+#include "SPCard.h"
 
-class SPSelectAction : SPGameplayAction
+class SPSelectAction : public SPGameplayAction
 {
 private:
+    bool isDraggingCard();
     bool validate(SPCard* grabbedCard);
 
 public:
-    SPSelectAction(SPGameState* gameState) : SPGameplayAction(gameState) {};
+    explicit SPSelectAction(SPGameState* gameState) : SPGameplayAction(gameState) {};
 
-    // PlayerAction Interface
-    void execute(InputEvent event) override;
+    void drag(glm::vec2 position);
+    void press();
+    void drag();
+    void release();
+
+    // IEventReceiver Interface
+    void eventCallback(Event event) override;
 };
 
-#endif //SP_GRAB_ACTION_H
+#endif //SP_SELECT_ACTION_H

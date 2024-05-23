@@ -2,8 +2,8 @@
 // Created by Will on 3/31/2023.
 //
 
-#ifndef SP_POINTER_H
-#define SP_POINTER_H
+#ifndef SP_CURSOR_H
+#define SP_CURSOR_H
 
 #include "Entity.h"
 
@@ -12,6 +12,7 @@ class SPCursor : public Entity
     bool enabled = false;
 
 public:
+
     SPCursor(Entity* initialTarget, glm::vec2 initialOffset);
     Entity* getTarget() { return parent; }
     void setTarget(Entity* newTarget) { this->setParent(newTarget); }
@@ -23,4 +24,4 @@ public:
     void disable();
 };
 
-#endif //SP_POINTER_H
+#endif //SP_CURSOR_H

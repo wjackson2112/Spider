@@ -14,7 +14,7 @@
 #include "EventManager.h"
 
 #include "InputManager.h"
-#include "InputComponent.h"
+//#include "InputComponent.h"
 
 #include "SpriteComponent2D.h"
 #include "AnimationComponent.h"
@@ -29,34 +29,74 @@
 #include <cstdlib>
 
 #include "SPSelectAction.h"
+#include "SPCancelAction.h"
+#include "SPDealAction.h"
+#include "SPUndoAction.h"
+//#include "SPDragAction.h"
+//#include "SPReleaseAction.h"
 
-bool pilePeeker = false;
+//#define PILEPEEKER
 
 
 SPSnapValidatorFourSuits::SPSnapValidatorFourSuits()
 {
-    InputConfig config = InputConfig();
-    config.mouseButtons.push_back(MOUSE_BUTTON_1);
-    config.receivesMousePosition = true;
-    config.keys = {KEY_D, KEY_Z};
+    gameState.gameMode = this;
 
-    auto* inputComponent = new InputComponent(config);
-    addComponent(inputComponent);
+//    InputConfig config = InputConfig();
+//    auto* inputComponent = new InputComponent(config);
+//    addComponent(inputComponent);
 
-    if(pilePeeker)
-    {
-        std::string text = "0.0";
-        Shader textShader = AssetManager::getInstance()->loadShader("shaders/text.vert",
-                                                                    "shaders/text.frag",
-                                                                    nullptr,
-                                                                    text);
-        TextFont textFont = AssetManager::getInstance()->loadTextFont("assets/arial.ttf",
-                                                                      "arial18", 18);
-        auto* textComponent = new TextComponent(textShader, textFont, text);
-        textComponent->setColor(glm::vec3(1.0f, 0.0f, 0.0f));
-        textComponent->setTransform(glm::vec3(0, -10.f, 0.001f));
-        addComponent(textComponent);
-    }
+    gameState.selectAction = new SPSelectAction(&gameState);
+    gameState.cancelAction = new SPCancelAction(&gameState);
+    gameState.dealAction = new SPDealAction(&gameState);
+    gameState.undoAction = new SPUndoAction(&gameState);
+
+    // TODO: Move all these input bindings to some external class with a save/load serialization option
+    // Window Inputs
+    InputManager::getInstance()->addBinding(KEY_ESCAPE, ACTION_PRESS, Event(Event::EVT_QUIT_GAME));
+    InputManager::getInstance()->addBinding(KEY_F1, ACTION_PRESS, Event(Event::EVT_WIREFRAME_MODE));
+
+    // Directional Input
+    InputManager::getInstance()->addBinding(MOUSE_BUTTON_NONE, ACTION_NONE, Event(SPEvent::EVT_DRAG));
+    InputManager::getInstance()->addBinding(GAMEPAD_BUTTON_DPAD_UP, ACTION_PRESS, Event(SPEvent::EVT_UP));
+    InputManager::getInstance()->addBinding(GAMEPAD_BUTTON_DPAD_DOWN, ACTION_PRESS, Event(SPEvent::EVT_DOWN));
+    InputManager::getInstance()->addBinding(GAMEPAD_BUTTON_DPAD_LEFT, ACTION_PRESS, Event(SPEvent::EVT_LEFT));
+    InputManager::getInstance()->addBinding(GAMEPAD_BUTTON_DPAD_RIGHT, ACTION_PRESS, Event(SPEvent::EVT_RIGHT));
+
+    // Press
+    InputManager::getInstance()->addBinding(MOUSE_BUTTON_1, ACTION_PRESS, Event(SPEvent::EVT_PRESS));
+    InputManager::getInstance()->addBinding(GAMEPAD_BUTTON_A, ACTION_PRESS, Event(SPEvent::EVT_PRESS));
+
+    // Release
+    InputManager::getInstance()->addBinding(MOUSE_BUTTON_1, ACTION_RELEASE, Event(SPEvent::EVT_RELEASE));
+    InputManager::getInstance()->addBinding(GAMEPAD_BUTTON_A, ACTION_RELEASE, Event(SPEvent::EVT_RELEASE));
+
+    // Cancel
+    InputManager::getInstance()->addBinding(MOUSE_BUTTON_2, ACTION_RELEASE, Event(SPEvent::EVT_CANCEL));
+    InputManager::getInstance()->addBinding(GAMEPAD_BUTTON_B, ACTION_RELEASE, Event(SPEvent::EVT_CANCEL));
+
+    // Deal
+    InputManager::getInstance()->addBinding(KEY_D, ACTION_PRESS, Event(SPEvent::EVT_DEAL));
+    InputManager::getInstance()->addBinding(GAMEPAD_BUTTON_Y, ACTION_PRESS, Event(SPEvent::EVT_DEAL));
+
+    // Undo
+    InputManager::getInstance()->addBinding(KEY_Z, ACTION_PRESS, Event(SPEvent::EVT_UNDO), MOD_CONTROL);
+    InputManager::getInstance()->addBinding(GAMEPAD_BUTTON_X, ACTION_PRESS, Event(SPEvent::EVT_UNDO));
+
+
+#ifdef PILEPEEKER
+    std::string text = "0.0";
+    Shader textShader = AssetManager::getInstance()->loadShader("shaders/text.vert",
+                                                                "shaders/text.frag",
+                                                                nullptr,
+                                                                text);
+    TextFont textFont = AssetManager::getInstance()->loadTextFont("assets/arial.ttf",
+                                                                  "arial18", 18);
+    auto* textComponent = new TextComponent(textShader, textFont, text);
+    textComponent->setColor(glm::vec3(1.0f, 0.0f, 0.0f));
+    textComponent->setTransform(glm::vec3(0, -10.f, 0.001f));
+    addComponent(textComponent);
+#endif
 
     OptionsManager::getInstance()->registerReceiver(this);
 
@@ -64,59 +104,24 @@ SPSnapValidatorFourSuits::SPSnapValidatorFourSuits()
 
     receivesUpdates = true;
 
-    unselectedUIGrid.setPriorityX(UIGD_PRIORITIZE_AXIS);
-    unselectedUIGrid.setPriorityY(UIGD_PRIORITIZE_ALIGNMENT);
-    unselectedUIGrid.wrapX = true;
-    unselectedUIGrid.wrapY = true;
+    gameState.unselectedUIGrid.setPriorityX(UIGD_PRIORITIZE_AXIS);
+    gameState.unselectedUIGrid.setPriorityY(UIGD_PRIORITIZE_ALIGNMENT);
+    gameState.unselectedUIGrid.wrapX = true;
+    gameState.unselectedUIGrid.wrapY = true;
 
-    selectedUIGrid.setPriorityX(UIGD_PRIORITIZE_AXIS);
-    selectedUIGrid.setPriorityY(UIGD_PRIORITIZE_ALIGNMENT);
-    selectedUIGrid.wrapX = true;
-    selectedUIGrid.wrapY = true;
+    gameState.selectedUIGrid.setPriorityX(UIGD_PRIORITIZE_AXIS);
+    gameState.selectedUIGrid.setPriorityY(UIGD_PRIORITIZE_ALIGNMENT);
+    gameState.selectedUIGrid.wrapX = true;
+    gameState.selectedUIGrid.wrapY = true;
 
-    activeUIGrid = &unselectedUIGrid;
+    gameState.activeUIGrid = &gameState.unselectedUIGrid;
 }
 
 SPSnapValidatorFourSuits::~SPSnapValidatorFourSuits()
 {
+    delete(gameState.selectAction);
+    delete(gameState.dealAction);
     OptionsManager::getInstance()->deregisterReceiver(this);
-}
-
-void SPSnapValidatorFourSuits::deal()
-{
-    // No dealing if any of the tableaus are empty
-    for(auto* tableau : gameState.tableaus)
-        if(!tableau->getPileChild())
-            return;
-
-    for(auto* tableau : gameState.tableaus)
-    {
-        SPCard* card = dynamic_cast<SPCard*>(gameState.stock->getPileEnd());
-        card->raiseToFront();
-        card->flip();
-        tableau->addToPile(card);
-    }
-    gameState.moveList.emplace_back(MoveEntry(nullptr, nullptr));
-
-    unselectedUIGrid.clearBearing();
-    updateUnselectedUIGrid();
-}
-
-void SPSnapValidatorFourSuits::undoDeal()
-{
-    for(std::vector<SPPile*>::reverse_iterator iter = gameState.tableaus.rbegin(); iter != gameState.tableaus.rend(); iter++)
-    {
-        SPPile* tableau = *iter;
-        SPCard* card = dynamic_cast<SPCard*>(tableau->getPileEnd());
-        card->removeFromPile();
-        card->raiseToFront();
-        gameState.stock->addToPile(card);
-
-        if(gamepadCursor->getTarget() == card)
-            gamepadCursor->setTarget(activeUIGrid->getElementBelow(card));
-    }
-
-    updateUnselectedUIGrid();
 }
 
 void SPSnapValidatorFourSuits::initialSetup(Scene *scene)
@@ -137,7 +142,7 @@ void SPSnapValidatorFourSuits::initialSetup(Scene *scene)
 //                SPCard* newCard = new SPCard();
 
 //                entityManager->registerEntity(scene, newCard);
-                auto* newCard = scene->addEntity<SPCard>(glm::vec2(10.f, 10.f), SPSUIT_SPADE, (SPCardValue) value, false, this);
+                auto* newCard = scene->addEntity<SPCard>(glm::vec2(10.f, 10.f), SPSUIT_SPADE, (SPCardValue) value, false, &gameState);
                 cardSet.push_back(newCard);
             }
 //        }
@@ -210,11 +215,12 @@ void SPSnapValidatorFourSuits::initialSetup(Scene *scene)
         cardSet.pop_back();
     }
 
-    gamepadCursor = scene->addEntity<SPCursor>(gameState.tableaus[0]->getPileEnd(), glm::vec2(5.0f, 5.0f));
-//    entityManager->registerEntity(scene, gamepadCursor);
+    gameState.cursor = scene->addEntity<SPCursor>(gameState.tableaus[0]->getPileEnd(), glm::vec2(5.0f, 5.0f));
+    gameState.cursor->enable();
+//    entityManager->registerEntity(scene, gameState.cursor);
 
     updateLayout();
-    updateUnselectedUIGrid();
+    gameState.updateUnselectedUIGrid();
 }
 
 void SPSnapValidatorFourSuits::updateLayout()
@@ -308,73 +314,9 @@ void SPSnapValidatorFourSuits::updateLayout()
     }
 }
 
-void SPSnapValidatorFourSuits::reportClick(SPPilable* pilable)
+bool SPGameState::validateRelease(SPPilable* parent, SPPilable* child)
 {
-    if(pilable->getPileRoot() == gameState.stock)
-    {
-        deal();
-    }
-}
-
-//bool SPSnapValidatorFourSuits::validateGrab(SPPilable *parent, SPPilable *child)
-//{
-//    if(SPCard* childCard = dynamic_cast<SPCard*>(child))
-//        if(childCard->isFaceDown())
-//            return false;
-//
-//    if(child->getPileRoot() == gameState.stock)
-//        return false;
-//
-//    for(auto foundation : gameState.foundations)
-//        if(child->getPileRoot() == foundation)
-//            return false;
-//
-//    // Nothing below this card, legal
-//    if(child == child->getPileEnd())
-//        return true;
-//
-//    if(SPCard* childCard = dynamic_cast<SPCard*>(child))
-//    {
-//        SPCardSuit targetSuit = childCard->getSuit();
-//        SPCardValue targetValue = (SPCardValue) (childCard->getValue() - 1);
-//        SPPilable* curr = childCard->getPileChild();
-//        while(curr != nullptr)
-//        {
-//            if(SPCard* currCard = dynamic_cast<SPCard*>(curr))
-//            {
-//                if(currCard->getSuit() != targetSuit)
-//                    return false;
-//
-//                if(currCard->getValue() != targetValue)
-//                    return false;
-//            }
-//            targetValue = (SPCardValue) (targetValue - 1);
-//            curr = curr->getPileChild();
-//        }
-//
-//        // Got to the bottom of the stack with everything in the same suit, legal
-//        return true;
-//    }
-//    else
-//    {
-//        return false;
-//    }
-//}
-//
-//void SPSnapValidatorFourSuits::reportGrab(SPPilable *parent, SPPilable *child)
-//{
-//    if(parent)
-//        child->removeFromPile();
-//
-//    // Pop the card to the front
-//    child->raiseToFront();
-//
-//    gameState.moveList.push_back(MoveEntry(parent, child));
-//}
-
-bool SPSnapValidatorFourSuits::validateRelease(SPPilable* parent, SPPilable* child)
-{
-    SPPilable* oldParent = gameState.moveList.back().parent;
+    SPPilable* oldParent = moveList.back().parent;
     if(oldParent == parent)
         return false;
 
@@ -383,7 +325,7 @@ bool SPSnapValidatorFourSuits::validateRelease(SPPilable* parent, SPPilable* chi
         if(SPPile* parentPile = dynamic_cast<SPPile*>(parent))
         {
             // Never legal to play on a foundation
-            for(auto* foundation : gameState.foundations)
+            for(auto* foundation : foundations)
                 if(parentPile == foundation)
                     return false;
 
@@ -402,7 +344,7 @@ bool SPSnapValidatorFourSuits::validateRelease(SPPilable* parent, SPPilable* chi
             if(SPPile* pileRoot = dynamic_cast<SPPile*>(parent->getPileRoot()))
             {
                 // Never legal to play on the deck
-                if(pileRoot == gameState.stock)
+                if(pileRoot == stock)
                     return false;
 
                 // Remaining piles are play piles
@@ -420,469 +362,299 @@ bool SPSnapValidatorFourSuits::validateRelease(SPPilable* parent, SPPilable* chi
     return false;
 }
 
-void SPSnapValidatorFourSuits::reportRelease(SPPilable *parent, SPPilable *child)
-{
-    SPPilable* oldParent = gameState.moveList.back().parent;
-    parent->addToPile(child, inputMode == IM_GAMEPAD);
-
-    if(inputMode == IM_GAMEPAD)
-    {
-        child->deselect();
-        handleCompleteSuitIfFound(child);
-    }
-
-    // Flip face down cards in play when their child is removed
-    if(auto oldParentCard = dynamic_cast<SPCard*>(oldParent))
-    {
-        // Check that the player didn't put the card back where it came from
-        if(parent != oldParentCard && oldParentCard->isFaceDown())
-        {
-            oldParentCard->flip();
-        }
-
-        if(gameState.moveList.back().child && gameState.moveList.back().parent &&
-                gameState.moveList.back().child == child &&
-                gameState.moveList.back().parent == parent)
-        {
-            // Forget the previous move, player put the card back
-            gameState.moveList.pop_back();
-            return;
-        }
-    }
-
-    unselectedUIGrid.clearBearing();
-    updateUnselectedUIGrid();
-}
-
-void SPSnapValidatorFourSuits::undo()
-{
-    if(gameState.moveList.size() <= 0)
-        return;
-
-    MoveEntry currentEntry = gameState.moveList.back(); gameState.moveList.pop_back();
-
-    // If both are nullptr, this move was a deal
-    if(currentEntry.parent == nullptr && currentEntry.child == nullptr)
-    {
-        undoDeal();
-        return;
-    }
-
-    bool isSuitMove = false;
-    if(currentEntry.child->getPileParent())
-    {
-        // Undo'ing a suited stack to the foundation
-        for(SPPile* foundation : gameState.foundations)
-            if(currentEntry.child->getPileParent() == foundation)
-                isSuitMove = true;
-        currentEntry.child->removeFromPile();
-    }
-
-    // TODO: Should raiseToFront just be a part of addToPile?
-    currentEntry.child->raiseToFront();
-    currentEntry.parent->addToPile(currentEntry.child);
-
-    if(SPCard* parentCard = dynamic_cast<SPCard*>(currentEntry.parent))
-        if(currentEntry.parentFaceUp != parentCard->isFaceUp())
-            parentCard->flip();
-
-    // Ensure all moved cards are receiving updates
-    SPCard* currCard = dynamic_cast<SPCard*>(currentEntry.child);
-    while(currCard)
-    {
-        currCard = dynamic_cast<SPCard*>(currCard->getPileChild());
-    }
-
-    // Undo again if it's a suit move to break the suited stack
-    if(isSuitMove)
-        undo();
-    else
-        updateUnselectedUIGrid();
-
-    if(inputMode == IM_GAMEPAD)
-        currentEntry.child->deselect();
-}
-
-SPCard* SPSnapValidatorFourSuits::getTopmostCardAtPosition(glm::vec2 position)
-{
-//    EntityManager* entityManager = EntityManager::getInstance();
-//    std::vector<Entity*> entities = entityManager->getEntitiesInScene(entityManager->getSceneForEntity(this));
-    std::vector<Entity*> entities = owningScene->getEntities();
-    for(Entity* entity : entities)
-    {
-        auto* card = dynamic_cast<SPCard*>(entity);
-        if(!card)
-            continue;
-
-        if(card->isTopmostAtPoint(position))
-            return card;
-    }
-
-    return nullptr;
-}
-
-void SPSnapValidatorFourSuits::update(float deltaTime)
-{
-    Entity::update(deltaTime);
-
-//    static glm::vec2 grabStartPosition = NO_GRAB;
-//    static glm::vec2 grabOffset = NO_GRAB;
-//    static SPCard *grabbedCard = nullptr;
-
-    static glm::vec2 lastMousePosition = glm::vec2(0, 0);
-
-    auto* inputComponent = getComponent<InputComponent>();
-
-    while(inputComponent->hasEvents())
-    {
-        InputEvent event = inputComponent->dequeueEvent();
-        if(event.isKeyEvent())
-        {
-            switch(event.key)
-            {
-                case KEY_D:
-                    if(event.action == ACTION_PRESS)
-                        deal();
-                    break;
-                case KEY_Z:
-                    if(event.action == ACTION_PRESS && event.mods == MOD_CONTROL)
-                        undo();
-                    break;
-                default:
-                    return;
-            }
-        }
-        else if(event.isMouseEvent())
-        {
-            if(inputMode != IM_MKB)
-            {
-                gamepadCursor->disable();
-                if(gameState.grabbedCard)
-                {
-                    undo();
-                    swapUIGrid();
-                }
-                inputMode = IM_MKB;
-            }
-
-            switch(event.action)
-            {
-                case ACTION_PRESS:
-                {
-                    SPSelectAction(&gameState).execute(event);
-//                    gameState.grabbedCard = getTopmostCardAtPosition(event.position);
-//                    if (gameState.grabbedCard && validateGrab(gameState.grabbedCard->getPileParent(), gameState.grabbedCard))
-//                    {
-//                        glm::vec2 cardPosition = gameState.grabbedCard->getWorldTransform().getPosition2();
-//                        grabStartPosition = event.position;
-//                        grabOffset = glm::vec2(event.position.x - cardPosition.x,
-//                                               event.position.y - cardPosition.y);
+//void SPSnapValidatorFourSuits::update(float deltaTime)
+//{
+//    Entity::update(deltaTime);
 //
-//                        gameState.grabbedCard->select();
-//                        reportGrab(gameState.grabbedCard->getPileParent(), gameState.grabbedCard);
-//                    }
-//                    else
-//                    {
-//                        gameState.grabbedCard = nullptr;
-//                    }
-                    break;
-                }
-                case ACTION_RELEASE:
-                {
-                    if(gameState.grabbedCard)
-                    {
-                        SPPilable* bestPilable = gameState.grabbedCard->getClosestOverlap();
-                        if(bestPilable)
-                            reportRelease(bestPilable, gameState.grabbedCard);
-                        else
-                            undo();
-                    }
-                    else
-                    {
-                        if(SPPilable* clickedPilable = getTopmostCardAtPosition(event.position))
-                            reportClick(clickedPilable);
-                    }
+////    static glm::vec2 grabStartPosition = NO_GRAB;
+////    static glm::vec2 grabOffset = NO_GRAB;
+////    static SPCard *grabbedCard = nullptr;
+//
+//#ifdef PILEPEEKER
+//    static glm::vec2 lastMousePosition = glm::vec2(0, 0);
+//#endif
+//
+//    auto* inputComponent = getComponent<InputComponent>();
+//
+//    while(inputComponent->hasEvents())
+//    {
+//        InputEvent event = inputComponent->dequeueEvent();
+//        if(event.isMouseEvent())
+//        {
+////            if(InputManager::getInstance()->getInputMode() != IM_MKB)
+////            {
+////                if(gameState.grabbedCard)
+////                {
+////                    EventManager::getInstance()->broadcastEvent(Event(SPEvent::EVT_CANCEL));
+////                }
+//////                gameState.inputMode = IM_MKB;
+////            }
+//
+//            switch(event.action)
+//            {
+//                case ACTION_NONE:
+//                {
+//#ifdef PILEPEEKER
+//                    lastMousePosition = event.position;
+//#endif
+//                    break;
+//                }
+//                default:
+//                    return;
+//            }
+//        }
+//        if(event.isGamepadEvent())
+//        {
+////            if(gameState.inputMode != IM_GAMEPAD)
+////            {
+//////                gameState.cursor->enable();
+//////                gameState.cursor->setTarget(gameState.tableaus[0]->getPileEnd());
+////                if(gameState.grabbedCard)
+////                {
+////                    EventManager::getInstance()->broadcastEvent(Event(SPEvent::EVT_CANCEL));
+////                }
+////                gameState.inputMode = IM_GAMEPAD;
+////            }
+//
+//            if(event.padButton != GAMEPAD_BUTTON_NONE)
+//            {
+//                Entity* newTarget = nullptr;
+//                glm::vec2 cursorPosition = InputManager::getCursorPosition();
+//                switch(event.padButton)
+//                {
+////                    case GAMEPAD_BUTTON_DPAD_UP: {
+////                        if (event.action == ACTION_PRESS)
+////                        {
+////                            newTarget = gameState.activeUIGrid->getElementAbove(gameState.cursor->getTarget());
+////                            if(!newTarget)
+////                                continue;
+////
+////                            gameState.cursor->setTarget(newTarget);
+////                            cursorPosition = gameState.cursor->getWorldTransform().getPosition2();
+////
+////
+////
+////                            glm::vec3 offset = glm::vec3(0);
+////                            if(SPPilable* pilableTarget = dynamic_cast<SPPilable*>(newTarget))
+////                            {
+////                                if (pilableTarget == pilableTarget->getPileRoot())
+////                                    offset = pilableTarget->getRootOffset();
+////                                else
+////                                    offset = pilableTarget->getPileOffset();
+////                            }
+////
+////                            event.position = cursorPosition + glm::vec2(offset.x, offset.y);
+////
+////                            if (gameState.grabbedCard)
+////                            {
+////                                gameState.selectAction->drag(event.position);
+//////                                gameState.grabbedCard->getTransform()->setPosition2(glm::vec2(cursorPosition.x + offset.x - gameState.select->grabOffset.x,
+//////                                                                                    cursorPosition.y + offset.y - gameState.select->grabOffset.y));
+////                                gameState.cursor->setTarget(gameState.grabbedCard);
+////                            }
+////                        }
+////                        break;
+////                    }
+////                    case GAMEPAD_BUTTON_DPAD_DOWN:
+////                    {
+////                        if (event.action == ACTION_PRESS)
+////                        {
+////                            newTarget = gameState.activeUIGrid->getElementBelow(gameState.cursor->getTarget());
+////                            if(!newTarget)
+////                                continue;
+////
+////                            gameState.cursor->setTarget(newTarget);
+////                            cursorPosition = gameState.cursor->getWorldTransform().getPosition2();
+////
+////                            glm::vec3 offset = glm::vec3(0);
+////                            if(SPPilable* pilableTarget = dynamic_cast<SPPilable*>(newTarget))
+////                            {
+////                                if (pilableTarget == pilableTarget->getPileRoot())
+////                                    offset = pilableTarget->getRootOffset();
+////                                else
+////                                    offset = pilableTarget->getPileOffset();
+////                            }
+////
+////                            event.position = cursorPosition + glm::vec2(offset.x, offset.y);
+////
+////                            if (gameState.grabbedCard)
+////                            {
+////                                gameState.selectAction->drag(event.position);
+//////                                gameState.grabbedCard->getTransform()->setPosition2(glm::vec2(cursorPosition.x + offset.x - gameState.select->grabOffset.x,
+//////                                                                                    cursorPosition.y + offset.y - gameState.select->grabOffset.y));
+////                                gameState.cursor->setTarget(gameState.grabbedCard);
+////                            }
+////                        }
+////                        break;
+////                    }
+////                    case GAMEPAD_BUTTON_DPAD_LEFT:
+////                    {
+////                        if (event.action == ACTION_PRESS)
+////                        {
+////                            newTarget = gameState.activeUIGrid->getElementToLeft(gameState.cursor->getTarget());
+////                            if(!newTarget)
+////                                continue;
+////
+////                            gameState.cursor->setTarget(newTarget);
+////                            cursorPosition = gameState.cursor->getWorldTransform().getPosition2();
+////                            InputManager::setCursorPosition(cursorPosition);
+////
+////                            glm::vec3 offset = glm::vec3(0);
+////                            if(SPPilable* pilableTarget = dynamic_cast<SPPilable*>(newTarget))
+////                            {
+////                                if (pilableTarget == pilableTarget->getPileRoot())
+////                                    offset = pilableTarget->getRootOffset();
+////                                else
+////                                    offset = pilableTarget->getPileOffset();
+////                            }
+////
+////                            event.position = cursorPosition + glm::vec2(offset.x, offset.y);
+////
+////                            if (gameState.grabbedCard)
+////                            {
+////                                gameState.selectAction->drag(event.position);
+//////                                gameState.grabbedCard->getTransform()->setPosition2(glm::vec2(cursorPosition.x + offset.x - gameState.select->grabOffset.x,
+//////                                                                                    cursorPosition.y + offset.y - gameState.select->grabOffset.y));
+////                                gameState.cursor->setTarget(gameState.grabbedCard);
+////                            }
+////                        }
+////                        break;
+////                    }
+////                    case GAMEPAD_BUTTON_DPAD_RIGHT:
+////                    {
+////                        if (event.action == ACTION_PRESS) {
+////                            Entity* oldTarget = gameState.cursor->getTarget();
+////                            if(oldTarget)
+////                                newTarget = gameState.activeUIGrid->getElementToRight(gameState.cursor->getTarget());
+////                            else
+////                                newTarget = gameState.tableaus[0]->getPileEnd();
+////
+////                            if(!newTarget)
+////                                continue;
+////
+////                            gameState.cursor->setTarget(newTarget);
+////                            cursorPosition = gameState.cursor->getWorldTransform().getPosition2();
+////                            InputManager::setCursorPosition(cursorPosition);
+////
+////
+////                            glm::vec3 offset = glm::vec3(0);
+////                            if(SPPilable* pilableTarget = dynamic_cast<SPPilable*>(newTarget))
+////                            {
+////                                if (pilableTarget == pilableTarget->getPileRoot())
+////                                    offset = pilableTarget->getRootOffset();
+////                                else
+////                                    offset = pilableTarget->getPileOffset();
+////                            }
+////
+////                            event.position = cursorPosition + glm::vec2(offset.x, offset.y);
+////
+////                            if (gameState.grabbedCard)
+////                            {
+////                                gameState.selectAction->drag(event.position);
+////
+//////                                gameState.grabbedCard->getTransform()->setPosition2(glm::vec2(cursorPosition.x + offset.x - gameState.select->grabOffset.x,
+//////                                                                                    cursorPosition.y + offset.y - gameState.select->grabOffset.y));
+//////                                gameState.cursor->setTarget(gameState.grabbedCard);
+////                            }
+////                        }
+////                        break;
+////                    }
+////                    case GAMEPAD_BUTTON_A:
+////                    {
+////                        if (event.action == ACTION_PRESS) {
+////                            gameState.selectAction->press();
+////                            break;
+////                        }
+////                        else if(event.action == ACTION_RELEASE)
+////                        {
+////                            gameState.selectAction->release();
+////                            break;
+////                        }
+////                        break;
+////                    }
+////                    case GAMEPAD_BUTTON_B:
+////                    {
+////                        if (event.action == ACTION_RELEASE) {
+////                            gameState.cancelAction->release(event);
+////                        }
+////                        break;
+////                    }
+////                    case GAMEPAD_BUTTON_Y:
+////                    {
+////                        if (event.action == ACTION_PRESS) {
+////                            gameState.dealAction->press(event);
+////                        }
+////                        break;
+////                    }
+////                    case GAMEPAD_BUTTON_X:
+////                    {
+////                        if (event.action == ACTION_PRESS) {
+////                            gameState.undoAction->press(event);
+////                        }
+////                        break;
+////                    }
+//                }
+//
+//                InputManager::setCursorPosition(cursorPosition);
+//            }
+//
+//            if(event.axis != GAMEPAD_AXIS_NONE && abs(event.axisValue) > 0.25f)
+//                std::cout << "Axis: " << event.axis << " " << event.axisValue << std::endl;
+//
+//
+//
+//            // Down 13
+//            // Right 12
+//            // Up 11
+//            // Left 14
+//        }
+//
+//        if(gameState.grabbedCard)
+//            gameState.updateGhostCards(gameState.grabbedCard);
+//    }
+//
+//#ifdef PILEPEEKER
+//    std::stringstream stream;
+//
+////    EntityManager* entityManager = EntityManager::getInstance();
+//
+//    // Get all cards under the mouse cursor
+//    std::vector<SPCard*> cardsUnderPoint;
+//    std::vector<Entity*> entities = owningScene->getEntities();
+//    for(Entity* entity : entities)
+//        if(SPCard* card = dynamic_cast<SPCard*>(entity))
+//            if(card->containsPoint(lastMousePosition))
+//                cardsUnderPoint.push_back(card);
+//
+//    // Sort cards by z depth
+//    struct compare_predicate
+//    {
+//        inline bool operator() (SPCard* card1, SPCard* card2)
+//        {
+//            return (card1->getWorldTransform().getPosition().z < card2->getWorldTransform().getPosition().z);
+//        }
+//    };
+//    std::sort(cardsUnderPoint.begin(), cardsUnderPoint.end(), compare_predicate());
+//
+//    // Print the slot the card is currently occupying
+//    for(SPCard* card : cardsUnderPoint)
+//    {
+//        stream << card->getValue() << " " << card->getWorldTransform().getPosition().x << " " << card->getWorldTransform().getPosition().y << "\n";
+//    }
+//
+//    std::string text = stream.str();
+//    this->getComponent<TextComponent>()->setText(text);
+//    this->getComponent<TextComponent>()->setTransform(Transform(glm::vec3(lastMousePosition.x, lastMousePosition.y, 0.0f)));
+//# endif
+//}
 
-                    gameState.grabbedCard = nullptr;
-                    break;
-                }
-                case ACTION_NONE:
-                {
-                    lastMousePosition = event.position;
-
-                    // We don't care where the mouse is if the card isn't grabbed
-                    if (gameState.grabbedCard == nullptr)
-                        break;
-
-                    // Grabs are done only with mouse 1
-                    if (InputManager::getInstance()->getLastMouseState(MOUSE_BUTTON_1) != ACTION_PRESS)
-                        break;
-
-                    // A move while the button is pressed is a "drag"
-                    // check if we've moved past our minimum drag threshold, then move the card
-
-                    glm::vec2 difference = event.position - gameState.grabStartPosition;
-                    float differenceLen = glm::length(event.position - gameState.grabStartPosition);
-                    if (differenceLen > DRAG_THRESHOLD)
-                        gameState.grabbedCard->getTransform()->setPosition2(glm::vec2(event.position.x - gameState.grabOffset.x, event.position.y - gameState.grabOffset.y));
-
-                    break;
-                }
-                default:
-                    return;
-            }
-        }
-        else if(event.isGamepadEvent())
-        {
-            if(event.padButton != GAMEPAD_BUTTON_NONE && inputMode == IM_GAMEPAD)
-            {
-                Entity* newTarget = nullptr;
-                glm::vec2 cursorPosition = InputManager::getCursorPosition();
-                switch(event.padButton)
-                {
-                    case GAMEPAD_BUTTON_DPAD_UP: {
-                        if (event.action == ACTION_PRESS)
-                        {
-                            newTarget = activeUIGrid->getElementAbove(gamepadCursor->getTarget());
-                            if(!newTarget)
-                                continue;
-
-                            gamepadCursor->setTarget(newTarget);
-                            cursorPosition = gamepadCursor->getWorldTransform().getPosition2();
-
-
-
-                            glm::vec3 offset = glm::vec3(0);
-                            if(SPPilable* pilableTarget = dynamic_cast<SPPilable*>(newTarget))
-                            {
-                                if (pilableTarget == pilableTarget->getPileRoot())
-                                    offset = pilableTarget->getRootOffset();
-                                else
-                                    offset = pilableTarget->getPileOffset();
-                            }
-
-                            if (gameState.grabbedCard)
-                            {
-                                gameState.grabbedCard->getTransform()->setPosition2(glm::vec2(cursorPosition.x + offset.x - gameState.grabOffset.x,
-                                                                                    cursorPosition.y + offset.y - gameState.grabOffset.y));
-                                gamepadCursor->setTarget(gameState.grabbedCard);
-                            }
-                        }
-                        break;
-                    }
-                    case GAMEPAD_BUTTON_DPAD_DOWN:
-                    {
-                        if (event.action == ACTION_PRESS)
-                        {
-                            newTarget = activeUIGrid->getElementBelow(gamepadCursor->getTarget());
-                            if(!newTarget)
-                                continue;
-
-                            gamepadCursor->setTarget(newTarget);
-                            cursorPosition = gamepadCursor->getWorldTransform().getPosition2();
-
-                            glm::vec3 offset = glm::vec3(0);
-                            if(SPPilable* pilableTarget = dynamic_cast<SPPilable*>(newTarget))
-                            {
-                                if (pilableTarget == pilableTarget->getPileRoot())
-                                    offset = pilableTarget->getRootOffset();
-                                else
-                                    offset = pilableTarget->getPileOffset();
-                            }
-
-                            if (gameState.grabbedCard)
-                            {
-                                gameState.grabbedCard->getTransform()->setPosition2(glm::vec2(cursorPosition.x + offset.x - gameState.grabOffset.x,
-                                                                                    cursorPosition.y + offset.y - gameState.grabOffset.y));
-                                gamepadCursor->setTarget(gameState.grabbedCard);
-                            }
-                        }
-                        break;
-                    }
-                    case GAMEPAD_BUTTON_DPAD_LEFT:
-                    {
-                        if (event.action == ACTION_PRESS)
-                        {
-                            newTarget = activeUIGrid->getElementToLeft(gamepadCursor->getTarget());
-                            if(!newTarget)
-                                continue;
-
-                            gamepadCursor->setTarget(newTarget);
-                            cursorPosition = gamepadCursor->getWorldTransform().getPosition2();
-                            InputManager::setCursorPosition(cursorPosition);
-
-                            glm::vec3 offset = glm::vec3(0);
-                            if(SPPilable* pilableTarget = dynamic_cast<SPPilable*>(newTarget))
-                            {
-                                if (pilableTarget == pilableTarget->getPileRoot())
-                                    offset = pilableTarget->getRootOffset();
-                                else
-                                    offset = pilableTarget->getPileOffset();
-                            }
-
-                            if (gameState.grabbedCard)
-                            {
-                                gameState.grabbedCard->getTransform()->setPosition2(glm::vec2(cursorPosition.x + offset.x - gameState.grabOffset.x,
-                                                                                    cursorPosition.y + offset.y - gameState.grabOffset.y));
-                                gamepadCursor->setTarget(gameState.grabbedCard);
-                            }
-                        }
-                        break;
-                    }
-                    case GAMEPAD_BUTTON_DPAD_RIGHT:
-                    {
-                        if (event.action == ACTION_PRESS) {
-                            newTarget = activeUIGrid->getElementToRight(gamepadCursor->getTarget());
-                            if(!newTarget)
-                                continue;
-
-                            gamepadCursor->setTarget(newTarget);
-                            cursorPosition = gamepadCursor->getWorldTransform().getPosition2();
-                            InputManager::setCursorPosition(cursorPosition);
-
-                            glm::vec3 offset = glm::vec3(0);
-                            if(SPPilable* pilableTarget = dynamic_cast<SPPilable*>(newTarget))
-                            {
-                                if (pilableTarget == pilableTarget->getPileRoot())
-                                    offset = pilableTarget->getRootOffset();
-                                else
-                                    offset = pilableTarget->getPileOffset();
-                            }
-
-                            if (gameState.grabbedCard)
-                            {
-                                gameState.grabbedCard->getTransform()->setPosition2(glm::vec2(cursorPosition.x + offset.x - gameState.grabOffset.x,
-                                                                                    cursorPosition.y + offset.y - gameState.grabOffset.y));
-                                gamepadCursor->setTarget(gameState.grabbedCard);
-                            }
-                        }
-                        break;
-                    }
-                    case GAMEPAD_BUTTON_A:
-                    {
-                        if (event.action == ACTION_PRESS) {
-                            if (gameState.grabbedCard)
-                            {
-                                clearGhostCards();
-
-                                SPPilable* bestPilable = gameState.grabbedCard->getClosestOverlap();
-                                if(bestPilable)
-                                    reportRelease(bestPilable, gameState.grabbedCard);
-                                else
-                                    undo();
-
-                                gameState.grabbedCard = nullptr;
-                                swapUIGrid();
-                            }
-                            else
-                            {
-                                SPSelectAction(&gameState).execute(event);
-                                if(gameState.grabbedCard)
-                                {
-                                    updateSelectedUIGrid(gameState.grabbedCard);
-                                    swapUIGrid();
-                                }
-                            }
-                            break;
-                        }
-                    }
-                    case GAMEPAD_BUTTON_B:
-                    {
-                        if (event.action == ACTION_PRESS) {
-                            if (gameState.grabbedCard)
-                            {
-                                clearGhostCards();
-                                undo();
-                                gameState.grabbedCard = nullptr;
-                                swapUIGrid();
-                            }
-                        }
-                        break;
-                    }
-                    case GAMEPAD_BUTTON_Y:
-                    {
-                        if (event.action == ACTION_PRESS) {
-                            if (!gameState.grabbedCard)
-                            {
-                                deal();
-                            }
-                        }
-                        break;
-                    }
-                    case GAMEPAD_BUTTON_X:
-                    {
-                        if (event.action == ACTION_PRESS) {
-                            if (!gameState.grabbedCard)
-                            {
-                                undo();
-                            }
-                        }
-                        break;
-                    }
-                }
-
-                InputManager::setCursorPosition(cursorPosition);
-
-                if(gameState.grabbedCard)
-                    updateGhostCards(gameState.grabbedCard);
-            }
-            else if(inputMode != IM_GAMEPAD)
-            {
-                gamepadCursor->enable();
-                gamepadCursor->setTarget(gameState.tableaus[0]->getPileEnd());
-                inputMode = IM_GAMEPAD;
-            }
-
-            if(event.axis != GAMEPAD_AXIS_NONE && abs(event.axisValue) > 0.25f)
-                std::cout << "Axis: " << event.axis << " " << event.axisValue << std::endl;
-
-            // Down 13
-            // Right 12
-            // Up 11
-            // Left 14
-        }
-    }
-
-    if(pilePeeker)
-    {
-        std::stringstream stream;
-
-//        EntityManager* entityManager = EntityManager::getInstance();
-
-        // Get all cards under the mouse cursor
-        std::vector<SPCard*> cardsUnderPoint;
-        std::vector<Entity*> entities = owningScene->getEntities();
-        for(Entity* entity : entities)
-            if(SPCard* card = dynamic_cast<SPCard*>(entity))
-                if(card->containsPoint(lastMousePosition))
-                    cardsUnderPoint.push_back(card);
-
-        // Sort cards by z depth
-        struct compare_predicate
-        {
-            inline bool operator() (SPCard* card1, SPCard* card2)
-            {
-                return (card1->getWorldTransform().getPosition().z < card2->getWorldTransform().getPosition().z);
-            }
-        };
-        std::sort(cardsUnderPoint.begin(), cardsUnderPoint.end(), compare_predicate());
-
-        // Print the slot the card is currently occupying
-        for(SPCard* card : cardsUnderPoint)
-        {
-            stream << card->getValue() << " " << card->getWorldTransform().getPosition().x << " " << card->getWorldTransform().getPosition().y << "\n";
-        }
-
-        std::string text = stream.str();
-        this->getComponent<TextComponent>()->setText(text);
-        this->getComponent<TextComponent>()->setTransform(Transform(glm::vec3(lastMousePosition.x, lastMousePosition.y, 0.0f)));
-    }
+void SPGameState::reportAnimationComplete(SPPilable *pilable)
+{
+    gameMode->reportAnimationComplete(pilable);
 }
 
 void SPSnapValidatorFourSuits::reportAnimationComplete(SPPilable *pilable)
 {
-//    SPSnapValidatorFourSuits::alignPile(pilable);
-
     if(pilable->isSelected())
         pilable->deselect();
 
@@ -904,7 +676,7 @@ void SPSnapValidatorFourSuits::reportAnimationComplete(SPPilable *pilable)
         }
 
         if(winDetected)
-            EventManager::getInstance()->broadcastEvent(WON_GAME);
+            EventManager::getInstance()->broadcastEvent(Event(Event::EVT_WON_GAME));
     }
 
     for(auto foundation : gameState.foundations)
@@ -984,14 +756,14 @@ void SPSnapValidatorFourSuits::handleCompleteSuitIfFound(SPPilable *pilable)
         while(gameState.foundations[currFoundation]->getPileChild())
             currFoundation++;
 
-        gamepadCursor->setTarget(topCard->getPileParent());
+        gameState.cursor->setTarget(topCard->getPileParent());
 
         topCard->removeFromPile();
         topCard->raiseToFront();
         gameState.foundations[currFoundation]->addToPile(topCard);
         currFoundation++;
 
-        updateUnselectedUIGrid();
+        gameState.updateUnselectedUIGrid();
     }
 }
 
@@ -1037,28 +809,16 @@ void SPSnapValidatorFourSuits::rescalePile(SPPilable* pilable)
     }
 }
 
-void SPSnapValidatorFourSuits::alignPile(SPPilable* pilable)
-{
-    SPPilable *currPilable = pilable->getPileRoot();
-    currPilable->getPileChild()->getTransform()->setPosition(currPilable->getRootOffset());
-    currPilable = currPilable->getPileChild();
-
-    for (;currPilable->getPileChild() != nullptr; currPilable = currPilable->getPileChild())
-    {
-        currPilable->getPileChild()->getTransform()->setPosition(currPilable->getPileOffset());
-    }
-}
-
 void SPSnapValidatorFourSuits::resolutionUpdated(glm::vec2 oldRes, glm::vec2 newRes)
 {
     updateLayout();
 }
 
-void SPSnapValidatorFourSuits::updateUnselectedUIGrid()
+void SPGameState::updateUnselectedUIGrid()
 {
     unselectedUIGrid.deregisterAllElements();
 
-    for(SPPile* tableau : gameState.tableaus)
+    for(SPPile* tableau : tableaus)
     {
         if(tableau->getPileChild() == nullptr)
         {
@@ -1079,20 +839,20 @@ void SPSnapValidatorFourSuits::updateUnselectedUIGrid()
     }
 }
 
-void SPSnapValidatorFourSuits::updateSelectedUIGrid(SPCard* selectedCard)
+void SPGameState::updateSelectedUIGrid(SPCard* selectedCard)
 {
     selectedUIGrid.deregisterAllElements();
 
     selectedUIGrid.registerElement(selectedCard->getPilePrevParent());
 
-    for(SPPile* tableau : gameState.tableaus)
+    for(SPPile* tableau : tableaus)
     {
         if(validateRelease(tableau->getPileEnd(), selectedCard))
             selectedUIGrid.registerElement(tableau->getPileEnd());
     }
 }
 
-void SPSnapValidatorFourSuits::swapUIGrid()
+void SPGameState::swapUIGrid()
 {
     if(activeUIGrid == &unselectedUIGrid)
         activeUIGrid = &selectedUIGrid;
@@ -1100,9 +860,9 @@ void SPSnapValidatorFourSuits::swapUIGrid()
         activeUIGrid = &unselectedUIGrid;
 }
 
-void SPSnapValidatorFourSuits::updateGhostCards(SPCard* selectedCard)
+void SPGameState::updateGhostCards(SPCard* selectedCard)
 {
-    for(SPPile* tableau : gameState.tableaus)
+    for(SPPile* tableau : tableaus)
     {
         if(tableau->getPileEnd() == selectedCard)
             continue;
@@ -1113,13 +873,11 @@ void SPSnapValidatorFourSuits::updateGhostCards(SPCard* selectedCard)
             {
                 auto* currCard = dynamic_cast<SPCard*>(currPilable);
 
-//                auto* ghostCard = new SPCard(glm::vec2(0,0), currCard->getSuit(), currCard->getValue(), true, this);
                 auto* ghostCard = owningScene->addEntity<SPCard>(glm::vec2(0,0), currCard->getSuit(), currCard->getValue(), true, this);
                 auto* ghostSpriteComponent = ghostCard->getComponent<SpriteComponent2D>();
                 auto* ghostAnimationComponent = ghostCard->getComponent<AnimationComponent>();
 
                 tableau->addToPile(ghostCard, true);
-//                EntityManager::getInstance()->registerEntity(EntityManager::getInstance()->getSceneForEntity(selectedCard), ghostCard);
                 ghostSpriteComponent->setColor4(glm::vec4(0.5f, 0.75f, 0.5f, 0.0f));
                 ghostAnimationComponent->addAndStart<ColorAnimation>(ghostCard, glm::vec4(0.5f, 0.75f, 0.5f, 0.25f), 0.1f);
                 ghostCards.push_back(ghostCard);
@@ -1127,11 +885,14 @@ void SPSnapValidatorFourSuits::updateGhostCards(SPCard* selectedCard)
         }
     }
 
-    updateLayout();
+    gameMode->updateLayout();
 }
 
-void SPSnapValidatorFourSuits::clearGhostCards()
+void SPGameState::clearGhostCards()
 {
+    if(ghostCards.empty())
+        return;
+
     for(auto it = ghostCards.begin(); it != ghostCards.end(); it++)
     {
         (*it)->removeFromPile();
@@ -1139,15 +900,16 @@ void SPSnapValidatorFourSuits::clearGhostCards()
         (*it)->getTransform()->setPosition(glm::vec3(ghostPosition.x, ghostPosition.y, ghostPosition.z - STACK_OFFSET/2));
         (*it)->getComponent<AnimationComponent>()->skipAll();
 
-        auto* ghostSpriteComponent = (*it)->getComponent<SpriteComponent2D>();
+//        auto* ghostSpriteComponent = (*it)->getComponent<SpriteComponent2D>();
         auto* ghostAnimationComponent = (*it)->getComponent<AnimationComponent>();
-        ghostAnimationComponent->addAndStart<ColorAnimation>((*it), glm::vec4(0.5f, 0.75f, 0.5f, 0.0f), 0.1f, this, (AnimCompleteFunction) &SPSnapValidatorFourSuits::ghostCardClearComplete);
+        ghostAnimationComponent->addAndStart<ColorAnimation>((*it), glm::vec4(0.5f, 0.75f, 0.5f, 0.0f), 0.1f, this, (AnimCompleteFunction) &SPGameState::ghostCardClearComplete);
     }
 }
 
-void SPSnapValidatorFourSuits::ghostCardClearComplete(Entity* card)
+void SPGameState::ghostCardClearComplete(Entity* card)
 {
-//    EntityManager::getInstance()->deregisterEntity(card);
+//    owningScene->removeEntity(card);
+    card->shouldBeDestroyed = true;
     ghostCards.erase(std::remove(ghostCards.begin(), ghostCards.end(), card), ghostCards.end());
 }
 

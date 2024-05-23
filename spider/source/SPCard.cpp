@@ -14,17 +14,18 @@
 #include "AnimationComponent.h"
 #include "TransformAnimation.h"
 #include "OptionsManager.h"
+#include "SPSnapValidatorFourSuits.h"
 
 #include "EventManager.h"
 
 #define CARD_BACK_X_INDEX 13
 
-SPCard::SPCard(glm::vec2 position, SPCardSuit suit, SPCardValue value, bool faceUp, SPSnapValidator* validator)
+SPCard::SPCard(glm::vec2 position, SPCardSuit suit, SPCardValue value, bool faceUp, SPGameState* gameState)
 : suit(suit)
 , value(value)
 , color(SPBACK_BLUE)
 , faceUp(faceUp)
-, validator(validator)
+, gameState(gameState)
 , size(49.f, 64.f)
 {
     this->transform.setPosition2(position);
@@ -131,7 +132,7 @@ SPPilable* SPCard::getClosestOverlap()
             float newArea = overlap.x * overlap.y;
 
             // TODO: This is gross and shouldn't be here
-            if (newArea > bestArea && validator->validateRelease(newParent, this)) {
+            if (newArea > bestArea && gameState->validateRelease(newParent, this)) {
                 bestPilable = newPilable;
                 bestArea = newArea;
             }
@@ -236,5 +237,5 @@ void SPCard::animationComplete(Entity* entity)
     if(!getComponent<AnimationComponent>()->hasAnimations() && isFaceDown())
         receivesUpdates = false;
 
-    validator->reportAnimationComplete(this);
+    gameState->reportAnimationComplete(this);
 }

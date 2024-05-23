@@ -5,19 +5,39 @@
 #ifndef SP_GAMEPLAY_ACTION_H
 #define SP_GAMEPLAY_ACTION_H
 
-#include "PlayerAction.h"
 #include "SPCard.h"
 #include "SPSnapValidatorFourSuits.h"
 
-class SPGameplayAction : PlayerAction
+enum SPActionState
+{
+    SA_IDLE,
+    SA_PRESSED,
+    SA_DRAGGING
+};
+
+struct SPEvent : Event {
+public:
+    enum
+    {
+        EVT_CANCEL = Event::EVT_EVENT_LAST,
+        EVT_DEAL,
+        EVT_UNDO,
+        EVT_LEFT,
+        EVT_RIGHT,
+        EVT_UP,
+        EVT_DOWN
+    };
+};
+
+class SPGameplayAction : public IEventReceiver
 {
 protected:
     SPGameState* gameState;
 
 public:
-    SPGameplayAction(SPGameState* gameState) : gameState(gameState){}
+    SPActionState state = SA_IDLE;
 
-    virtual void execute(InputEvent event) = 0;
+    SPGameplayAction(SPGameState* gameState) : gameState(gameState){}
 
 protected:
     SPCard* getTopmostCardAtPosition(glm::vec2 position);

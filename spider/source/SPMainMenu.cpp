@@ -3,15 +3,11 @@
 //
 #include "SPMainMenu.h"
 
-#include <iostream>
-
 #include "CameraEntity2D.h"
 #include "MenuButton.h"
 #include "SPBackground.h"
-//#include "EntityManager.h"
 #include "EventManager.h"
 
-#include "Inputs.h"
 #include "InputManager.h"
 
 SPMainMenu::SPMainMenu()
@@ -19,9 +15,11 @@ SPMainMenu::SPMainMenu()
     addEntity<CameraEntity2D>();
     addEntity<SPBackground>();
     addEntity<MenuButton>(glm::vec2(50,50), glm::vec2(275, 50),
-                          "assets/block.png", "New Game", NEW_GAME);
+                          "assets/block.png", "New Game", Event(Event::EVT_NEW_GAME));
     addEntity<MenuButton>(glm::vec2(50,125), glm::vec2(275, 50),
-                          "assets/block.png", "Quit Game", QUIT_GAME);
+                          "assets/block.png", "Quit Game", Event(Event::EVT_QUIT_GAME));
+
+    InputManager::getInstance()->addBinding(MOUSE_BUTTON_1, ACTION_RELEASE, Event(Event::EVT_RELEASE));
 
 //    std::cout << "Creating Main Menu" << std::endl;
 //    EntityManager* entityManager = EntityManager::getInstance();

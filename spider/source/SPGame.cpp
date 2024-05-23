@@ -6,6 +6,7 @@
 #include "SPMainMenu.h"
 #include "SPScene.h"
 #include "EventManager.h"
+#include "InputManager.h"
 #ifdef USE_STEAMWORKS
 #include "Steamworks.h"
 #endif
@@ -21,6 +22,7 @@
 SPGame::SPGame()
 //        : Game(new MainMenu())
         : Game(new SPMainMenu())
+//          : Game(new SPScene())
 {
     EventManager::getInstance()->registerReceiver(this);
 }
@@ -29,12 +31,12 @@ void SPGame::eventCallback(Event event)
 {
     switch(event)
     {
-        case NEW_GAME:
+        case Event::EVT_NEW_GAME:
         {
             shouldStartNewGame = true;
             break;
         }
-        case WON_GAME:
+        case Event::EVT_WON_GAME:
         {
             shouldReturnToMenu = true;
         }
@@ -48,6 +50,7 @@ void SPGame::update()
     if(shouldStartNewGame)
     {
         sceneStack.clearScenes();
+        InputManager::getInstance()->clearBindings();
         Scene* mainScene = new SPScene();
         sceneStack.pushScene(mainScene);
         shouldStartNewGame = false;
@@ -56,6 +59,7 @@ void SPGame::update()
     else if(shouldReturnToMenu)
     {
         sceneStack.clearScenes();
+        InputManager::getInstance()->clearBindings();
         Scene* menuScene = new SPMainMenu();
         sceneStack.pushScene(menuScene);
         shouldReturnToMenu = false;
