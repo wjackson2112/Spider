@@ -22,7 +22,7 @@ SPFrameCounterEntity::SPFrameCounterEntity()
     textComponent->setTransform(glm::vec3(0.f, 0.f, 0.2f));
     addComponent(textComponent);
 
-    receivesUpdates = true;
+    shouldUpdate = true;
 }
 
 void SPFrameCounterEntity::update(float deltaTime)

@@ -102,7 +102,7 @@ SPSnapValidatorFourSuits::SPSnapValidatorFourSuits()
 
     this->transform.setPosition(glm::vec3(this->transform.getPosition().x, this->transform.getPosition().y, 0.5f));
 
-    receivesUpdates = true;
+    shouldUpdate = true;
 
     gameState.unselectedUIGrid.setPriorityX(UIGD_PRIORITIZE_AXIS);
     gameState.unselectedUIGrid.setPriorityY(UIGD_PRIORITIZE_ALIGNMENT);

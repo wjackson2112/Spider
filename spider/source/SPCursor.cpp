@@ -30,7 +30,7 @@ SPCursor::SPCursor(Entity* target, glm::vec2 offset)
     auto* animationComponent = new AnimationComponent();
     addComponent(animationComponent);
 
-    receivesUpdates = true;
+    shouldUpdate = true;
 }
 
 void SPCursor::enable()

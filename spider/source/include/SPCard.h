@@ -113,7 +113,7 @@ public:
     glm::vec2 getSize() { return size; }
 
     //IAnimationCompleteReceiver
-    void animationComplete(Entity* entity);
+    void animationCompleteWithId(std::string identifier, Entity* entity);
 };
 
 #endif //SP_CARD_H

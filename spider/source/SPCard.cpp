@@ -62,7 +62,7 @@ SPCard::SPCard(glm::vec2 position, SPCardSuit suit, SPCardValue value, bool face
 //    textComponent->setTransform(glm::vec3(0, -10.f, 0.001f));
 //    addComponent(textComponent);
 
-    receivesUpdates = faceUp;
+    shouldUpdate = faceUp;
 }
 
 SPCard::~SPCard()
@@ -179,7 +179,7 @@ void SPCard::flip()
     // Start receiving updates when card turned face up
     // NOTE: Face down disable is handled in the animation callback
     if(isFaceUp())
-        receivesUpdates = true;
+        shouldUpdate = true;
 
     std::string assetName = cardValueStrings[value] + "_of_" + cardSuitStrings[suit] + ".png";
     Texture2D texture = AssetManager::getInstance()->getTexture(assetName);
@@ -222,7 +222,7 @@ void SPCard::moveTo(glm::vec3 target)
     Transform targetTransform = this->transform;
     targetTransform.translate(translation);
 
-    animComp->addAndStart<TransformAnimation>(this, targetTransform, 0.3f, this, (AnimCompleteFunction) &SPCard::animationComplete);
+    animComp->addAndStart<TransformAnimation>(this, targetTransform, 0.3f, this, (AnimCompleteFunction) &SPCard::animationCompleteWithId);
 }
 
 void SPCard::setSize(glm::vec2 size)
@@ -231,11 +231,11 @@ void SPCard::setSize(glm::vec2 size)
     getComponent<SpriteComponent2D>()->setSize(size);
 }
 
-void SPCard::animationComplete(Entity* entity)
+void SPCard::animationCompleteWithId(std::string identifier, Entity* entity)
 {
     // Turn off updates for face down cards after they're all settled
     if(!getComponent<AnimationComponent>()->hasAnimations() && isFaceDown())
-        receivesUpdates = false;
+        shouldUpdate = false;
 
     gameState->reportAnimationComplete(this);
 }
