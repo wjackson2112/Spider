@@ -6,7 +6,6 @@
 #define SP_DEAL_ACTION_H
 
 #include "SPGameplayAction.h"
-#include "SPCard.h"
 
 class SPDealAction : public SPGameplayAction
 {

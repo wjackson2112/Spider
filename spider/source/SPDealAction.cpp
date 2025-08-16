@@ -3,6 +3,7 @@
 //
 
 #include "SPDealAction.h"
+#include "CFCard.h"
 
 void SPDealAction::deal()
 {
@@ -13,7 +14,7 @@ void SPDealAction::deal()
 
     for(auto* tableau : gameState->tableaus)
     {
-        SPCard* card = dynamic_cast<SPCard*>(gameState->stock->getPileEnd());
+        CFCard* card = dynamic_cast<CFCard*>(gameState->stock->getPileEnd());
         card->raiseToFront();
         card->flip();
         tableau->addToPile(card);

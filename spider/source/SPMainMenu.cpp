@@ -5,7 +5,7 @@
 
 #include "CameraEntity2D.h"
 #include "MenuButton.h"
-#include "SPBackground.h"
+#include "CFBackground.h"
 #include "EventManager.h"
 
 #include "InputManager.h"
@@ -13,7 +13,7 @@
 SPMainMenu::SPMainMenu()
 {
     addEntity<CameraEntity2D>();
-    addEntity<SPBackground>();
+    addEntity<CFBackground>();
     addEntity<MenuButton>(glm::vec2(50,50), glm::vec2(275, 50),
                           "assets/block.png", "New Game", Event(Event::EVT_NEW_GAME));
     addEntity<MenuButton>(glm::vec2(50,125), glm::vec2(275, 50),

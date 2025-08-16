@@ -12,13 +12,14 @@
 
 //#include "EntityManager.h"
 #include "CameraEntity2D.h"
+#include "CFBackground.h"
 #include "SPFrameCounterEntity.h"
 
 SPScene::SPScene()
 {
 //    EntityManager* entityManager = EntityManager::getInstance();
     addEntity<CameraEntity2D>();
-    addEntity<SPBackground>();
+    addEntity<CFBackground>();
     addEntity<SPFrameCounterEntity>();
     auto validator = addEntity<SPSnapValidatorFourSuits>();
     validator->initialSetup(this);

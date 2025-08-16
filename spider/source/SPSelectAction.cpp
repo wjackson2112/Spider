@@ -32,9 +32,9 @@ bool SPSelectAction::validate(SPCard* grabbedCard)
 
     if(SPCard* childCard = dynamic_cast<SPCard*>(grabbedCard))
     {
-        SPCardSuit targetSuit = childCard->getSuit();
-        SPCardValue targetValue = (SPCardValue) (childCard->getValue() - 1);
-        SPPilable* curr = childCard->getPileChild();
+        CFCardSuit targetSuit = childCard->getSuit();
+        CFCardRank targetValue = (CFCardRank) (childCard->getRank() - 1);
+        CFPilable* curr = childCard->getPileChild();
         while(curr != nullptr)
         {
             if(SPCard* currCard = dynamic_cast<SPCard*>(curr))
@@ -42,10 +42,10 @@ bool SPSelectAction::validate(SPCard* grabbedCard)
                 if(currCard->getSuit() != targetSuit)
                     return false;
 
-                if(currCard->getValue() != targetValue)
+                if(currCard->getRank() != targetValue)
                     return false;
             }
-            targetValue = (SPCardValue) (targetValue - 1);
+            targetValue = (CFCardRank) (targetValue - 1);
             curr = curr->getPileChild();
         }
 
@@ -149,13 +149,13 @@ void SPSelectAction::release()
         return;
     }
 
-    gameState->clearGhostCards();
-    SPPilable* bestPilable = gameState->selectAction->gameState->grabbedCard->getClosestOverlap();
-    if(bestPilable)
+    // gameState->clearGhostCards();
+    CFPilable* bestPilable = gameState->selectAction->gameState->grabbedCard->getClosestOverlap();
+    if(bestPilable && gameState->validateRelease(bestPilable, gameState->grabbedCard))
     {
         state = SA_IDLE;
 
-        SPPilable* parent = gameState->grabbedCard->getClosestOverlap();
+        CFPilable* parent = gameState->grabbedCard->getClosestOverlap();
         SPCard* child = gameState->grabbedCard;
 
         if(!parent)
@@ -165,7 +165,7 @@ void SPSelectAction::release()
         }
 
 //    SPPilable* oldParent = gameState.moveList.back().parent;
-        parent->addToPile(child/*, inputMode == IM_GAMEPAD*/);
+        parent->addToPile(child, false, gameState/*, inputMode == IM_GAMEPAD*/);
 
 //    if(inputMode == IM_GAMEPAD)
 //    {

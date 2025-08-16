@@ -21,6 +21,10 @@ target_include_directories(Spider
 
 target_link_libraries(Spider
                       PUBLIC
+                      CardFramework)
+
+target_link_libraries(Spider
+                      PUBLIC
                       GameEngine)
 
 add_subdirectory(assets)

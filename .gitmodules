@@ -1,3 +1,7 @@
 [submodule "engine"]
 	path = engine
 	url = https://github.com/wjackson2112/GameEngine
+[submodule "cardframework"]
+	path = cardframework
+	url = https://github.com/wjackson2112/CardFramework
+	branch = main

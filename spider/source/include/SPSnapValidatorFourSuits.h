@@ -10,6 +10,7 @@
 #include "Entity.h"
 #include "UIGrid.h"
 //#include "IInputReceiver.h"
+#include "CFGameState.h"
 #include "SPSnapValidator.h"
 #include "SPPile.h"
 #include "SPCursor.h"
@@ -28,11 +29,11 @@ class SPUndoAction;
 
 struct MoveEntry
 {
-    SPPilable* child;
-    SPPilable* parent;
+    CFPilable* child;
+    CFPilable* parent;
     bool parentFaceUp = true;
 
-    MoveEntry(SPPilable* parent, SPPilable* child)
+    MoveEntry(CFPilable* parent, CFPilable* child)
     : parent(parent)
     , child(child)
     {
@@ -43,7 +44,7 @@ struct MoveEntry
 
 class SPSnapValidatorFourSuits;
 
-struct SPGameState : public IAnimationCompleteReceiver
+struct SPGameState : public CFGameState
 {
     Scene* owningScene = nullptr;
     SPSnapValidatorFourSuits* gameMode = nullptr;
@@ -69,9 +70,9 @@ struct SPGameState : public IAnimationCompleteReceiver
     SPDealAction* dealAction;
     SPUndoAction* undoAction;
 
-    void reportAnimationComplete(SPPilable *pilable);
+    void animationCompleteWithId(std::string identifier, Entity *entity);
 
-    bool validateRelease(SPPilable* parent, SPPilable* child);
+    bool validateRelease(CFPilable* parent, CFPilable* child);
     //void reportRelease(SPPilable* parent, SPPilable* child);
 
     void updateUnselectedUIGrid();
@@ -101,10 +102,10 @@ public:
     void initialSetup(Scene* scene);
     void updateLayout();
 
-    void reportAnimationComplete(SPPilable* pilable);
+    void animationCompleteWithId(std::string identifier, Entity* entity);
 
-    void handleCompleteSuitIfFound(SPPilable *pilable);
-    void rescalePile(SPPilable* pilable);
+    void handleCompleteSuitIfFound(CFPilable *pilable);
+    void rescalePile(CFPilable* pilable);
 
     //IOptionsReceiver
     void resolutionUpdated(glm::vec2 oldRes, glm::vec2 newRes);

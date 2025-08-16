@@ -9,7 +9,7 @@ void SPCancelAction::cancel() {
     if (gameState->grabbedCard)
     {
         gameState->grabbedCard = nullptr;
-        gameState->clearGhostCards();
+        // gameState->clearGhostCards();
         EventManager::getInstance()->broadcastEvent(Event(SPEvent::EVT_UNDO));
         gameState->swapUIGrid();
     }

@@ -31,3 +31,4 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/spider/lib CACHE STRING "
 
 add_subdirectory(engine)
 add_subdirectory(spider)
+add_subdirectory(cardframework)
