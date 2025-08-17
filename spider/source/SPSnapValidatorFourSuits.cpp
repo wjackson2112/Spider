@@ -160,8 +160,7 @@ void SPSnapValidatorFourSuits::initialSetup(Scene *scene)
     {
         auto* tableau = scene->addEntity<SPPile>(glm::vec2(10.f + (i * 55.f), 100.f),
                                   glm::vec3(0.0f, 0.0f, STACK_OFFSET),
-                                  glm::vec3(0.0f, 20.0f, STACK_OFFSET),
-                                  false, this);
+                                  glm::vec3(0.0f, 20.0f, STACK_OFFSET));
         gameState.tableaus.push_back(tableau);
 //        entityManager->registerEntity(scene, pile);
     }
@@ -197,17 +196,12 @@ void SPSnapValidatorFourSuits::initialSetup(Scene *scene)
     {
         auto* foundation = scene->addEntity<SPPile>(glm::vec2(100.f + (i * 55.f), 10.f),
                                   glm::vec3(0.0f, 0.0f, STACK_OFFSET),
-                                  glm::vec3(0.0f, 0.0f, STACK_OFFSET),
-                                  false, this);
+                                  glm::vec3(0.0f, 0.0f, STACK_OFFSET));
         gameState.foundations.push_back(foundation);
 //        entityManager->registerEntity(scene, pile);
     }
 
-    // Put the rest of the cards into the deck
-    gameState.stock = new SPPile(glm::vec2(10.f, 10.f),
-                                 glm::vec3(0.0f, 0.0f, STACK_OFFSET),
-                                 glm::vec3(0.0f, 0.0f, STACK_OFFSET),
-                                 false, this);
+    gameState.stock = new CFDeck(glm::vec2(10.f, 10.f));
 
     while(!cardSet.empty())
     {
@@ -329,11 +323,12 @@ bool SPGameState::validateRelease(CFPilable* parent, CFPilable* child)
                 if(parentPile == foundation)
                     return false;
 
-            if(parentPile->incrementing && childCard->getRank() == CF_RANK_ACE)
-                return true;
-            else if(!parentPile->incrementing)
-                return true;
-            return false;
+            // if(parentPile->incrementing && childCard->getRank() == CF_RANK_ACE)
+            //     return true;
+            // else if(!parentPile->incrementing)
+            //     return true;
+            // return false;
+            return true;
         }
 
         if(SPCard* parentCard = dynamic_cast<SPCard*>(parent))
@@ -341,20 +336,20 @@ bool SPGameState::validateRelease(CFPilable* parent, CFPilable* child)
             if(parentCard->isFaceDown())
                 return false;
 
-            if(SPPile* pileRoot = dynamic_cast<SPPile*>(parent->getPileRoot()))
+            if(CFPile* pileRoot = dynamic_cast<CFPile*>(parent->getPileRoot()))
             {
                 // Never legal to play on the deck
                 if(pileRoot == stock)
                     return false;
 
                 // Remaining piles are play piles
-                if(!pileRoot->incrementing)
-                {
+                // if(!pileRoot->incrementing)
+                // {
 //                    bool suitsAlternate = (parentCard->getSuit() % 2) != (childCard->getSuit() % 2);
                     bool valuesDecrease = parentCard->getRank() == childCard->getRank() + 1;
                     if(valuesDecrease)
                         return true;
-                }
+                // }
             }
         }
     }

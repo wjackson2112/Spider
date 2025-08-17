@@ -15,6 +15,7 @@
 #include "SPPile.h"
 #include "SPCursor.h"
 #include "SPCard.h"
+#include "CFDeck.h"
 #include "IOptionsReceiver.h"
 
 #include <random>
@@ -51,7 +52,7 @@ struct SPGameState : public CFGameState
     std::vector<SPPile*> tableaus;
     std::vector<SPPile*> foundations;
     std::vector<SPCard*> ghostCards;
-    SPPile* stock;
+    CFDeck* stock;
 
     SPCursor* cursor;
 

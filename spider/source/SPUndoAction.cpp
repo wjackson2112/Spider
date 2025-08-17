@@ -65,6 +65,7 @@ void SPUndoAction::undoDeal() {
     {
         SPPile* tableau = *iter;
         SPCard* card = dynamic_cast<SPCard*>(tableau->getPileEnd());
+        card->flip();
         card->removeFromPile();
         card->raiseToFront();
         gameState->stock->addToPile(card);

@@ -3,7 +3,6 @@
 //
 
 #include "SPScene.h"
-#include "SPBackground.h"
 #include "SPCard.h"
 #include "SPPile.h"
 #include "SPSnapValidatorFourSuits.h"

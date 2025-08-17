@@ -14,21 +14,7 @@
 
 class SPPile : public CFPile//, public ICollisionReceiver
 {
-     // using CFPile::CFPile;
-
-protected:
-//     glm::vec2 size;
-     SPSnapValidator* validator;
-//
-public:
-     bool incrementing = false;
-//
-//     //SPPilable
-//     glm::vec2 getSize() { return size; }
-//     void setSize(glm::vec2 size);
-//
-     SPPile(glm::vec2 position, glm::vec3 rootOffset, glm::vec3 pileOffset, bool incrementing, SPSnapValidator* validator);
-//     ~SPPile();
+     using CFPile::CFPile;
 };
 
 #endif //SP_PILE_H
