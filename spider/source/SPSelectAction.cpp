@@ -8,7 +8,7 @@
 #include <iostream>
 
 bool SPSelectAction::isDraggingCard() {
-    return gameState->selectAction->gameState->grabbedCard && gameState->selectAction->state == SA_DRAGGING;
+    return gameState->grabbedCard && state == SA_DRAGGING;
 }
 
 bool SPSelectAction::validate(SPCard* grabbedCard)

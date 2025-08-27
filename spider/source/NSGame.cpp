@@ -1,0 +1,136 @@
+//
+// Created by will on 8/17/25.
+//
+
+#include <iostream>
+
+#include "Window.h"
+
+#include "NSGame.h"
+#include "SPMainMenu.h"
+#include "NSScene.h"
+#include "EventManager.h"
+#include "InputManager.h"
+#ifdef USE_STEAMWORKS
+#include "Steamworks.h"
+#endif
+
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#define GL_GLEXT_PROTOTYPES
+#define EGL_EGLEXT_PROTOTYPES
+#endif
+
+#include <functional>
+
+NSGame::NSGame()
+//        : Game(new MainMenu())
+        : Game(new SPMainMenu())
+//          : Game(new SPScene())
+{
+    EventManager::getInstance()->registerReceiver(this);
+}
+
+void NSGame::eventCallback(Event event)
+{
+    switch(event)
+    {
+        case Event::EVT_NEW_GAME:
+        {
+            shouldStartNewGame = true;
+            break;
+        }
+        case Event::EVT_WON_GAME:
+        {
+            shouldReturnToMenu = true;
+        }
+        default:
+            break;
+    }
+}
+
+void NSGame::update()
+{
+    if(shouldStartNewGame)
+    {
+        sceneStack.clearScenes();
+        InputManager::getInstance()->clearBindings();
+        Scene* mainScene = new NSScene();
+        sceneStack.pushScene(mainScene);
+        shouldStartNewGame = false;
+    }
+    else if(shouldReturnToMenu)
+    {
+        sceneStack.clearScenes();
+        InputManager::getInstance()->clearBindings();
+        Scene* menuScene = new SPMainMenu();
+        sceneStack.pushScene(menuScene);
+        shouldReturnToMenu = false;
+    }
+
+    Game::update();
+}
+
+std::function<void()> loop;
+void main_loop() { loop(); }
+
+int main()
+{
+#ifdef USE_STEAMWORKS
+    if ( SteamAPI_RestartAppIfNecessary( 480 ) )
+        return 1;
+
+    Steamworks steamworks_sdk;
+    if(steamworks_sdk.init() || !SteamUser()->BLoggedOn())
+    {
+        std::cout << "Failed to initialize Steamworks" << std::endl;
+        return 1;
+    }
+
+    SteamClient()->SetWarningMessageHook( &SteamAPIDebugTextHook );
+#endif
+
+    auto window = Window();
+
+    NSGame* nil = new NSGame();
+
+    loop = [&] {
+        nil->draw();
+
+        // Double buffer
+        window.swapBuffers();
+
+        // Poll GL Events
+        window.processInput();
+
+#ifdef USE_STEAMWORKS
+        steamworks_sdk.update();
+#endif
+
+        // Update entities
+        nil->update();
+
+        // Resolve collisions
+        nil->resolveCollisions();
+    };
+
+#ifdef __EMSCRIPTEN__
+    emscripten_set_main_loop(main_loop, 0, true);
+#else
+    while(!window.shouldClose())
+    {
+        main_loop();
+    }
+#endif
+
+    std::cout << "Terminating" << std::endl;
+
+    // Terminate
+#ifdef USE_STEAMWORKS
+    SteamAPI_Shutdown();
+#endif
+    delete nil;
+    window.close();
+    return 0;
+}
+

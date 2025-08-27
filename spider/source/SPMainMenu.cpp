@@ -19,7 +19,7 @@ SPMainMenu::SPMainMenu()
     addEntity<MenuButton>(glm::vec2(50,125), glm::vec2(275, 50),
                           "assets/block.png", "Quit Game", Event(Event::EVT_QUIT_GAME));
 
-    InputManager::getInstance()->addBinding(MOUSE_BUTTON_1, ACTION_RELEASE, Event(Event::EVT_RELEASE));
+    InputManager::getInstance()->addBinding(MOUSE_BUTTON_1, BUTTON_ACTION_RELEASE, Event(Event::EVT_RELEASE));
 
 //    std::cout << "Creating Main Menu" << std::endl;
 //    EntityManager* entityManager = EntityManager::getInstance();

@@ -17,6 +17,7 @@
 #include "SPCard.h"
 #include "CFDeck.h"
 #include "IOptionsReceiver.h"
+#include "MoveEntry.h"
 
 #include <random>
 
@@ -28,27 +29,34 @@ class SPCancelAction;
 class SPDealAction;
 class SPUndoAction;
 
-struct MoveEntry
-{
-    CFPilable* child;
-    CFPilable* parent;
-    bool parentFaceUp = true;
-
-    MoveEntry(CFPilable* parent, CFPilable* child)
-    : parent(parent)
-    , child(child)
-    {
-        if(SPCard* parentCard = dynamic_cast<SPCard*>(parent))
-            parentFaceUp = parentCard->isFaceUp();
-    }
-};
+// struct MoveEntry
+// {
+//     std::string type;
+//     int numCards = 0;
+//     CFPilable* child = nullptr;
+//     CFPilable* parent = nullptr;
+//     bool parentFaceUp = true;
+//
+//     MoveEntry(CFPilable* parent, CFPilable* child)
+//     : type("MOVE")
+//     , parent(parent)
+//     , child(child)
+//     {
+//         if(SPCard* parentCard = dynamic_cast<SPCard*>(parent))
+//             parentFaceUp = parentCard->isFaceUp();
+//     }
+//
+//     MoveEntry(int numCards)
+//     : type("DEAL")
+//     , numCards(numCards) {}
+// };
 
 class SPSnapValidatorFourSuits;
 
 struct SPGameState : public CFGameState
 {
     Scene* owningScene = nullptr;
-    SPSnapValidatorFourSuits* gameMode = nullptr;
+    SPSnapValidator* gameMode = nullptr;
     std::vector<SPPile*> tableaus;
     std::vector<SPPile*> foundations;
     std::vector<SPCard*> ghostCards;
@@ -84,7 +92,7 @@ struct SPGameState : public CFGameState
     void ghostCardClearComplete(Entity* card);
 };
 
-class SPSnapValidatorFourSuits : public SPSnapValidator, public Entity, public IOptionsReceiver, public IAnimationCompleteReceiver
+class SPSnapValidatorFourSuits : public SPSnapValidator, public Entity, public IOptionsReceiver
 {
     std::random_device rd = std::random_device {};
     std::default_random_engine rng = std::default_random_engine {rd()};

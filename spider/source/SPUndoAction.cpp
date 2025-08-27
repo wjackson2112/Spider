@@ -21,7 +21,7 @@ void SPUndoAction::undo() {
     // If both are nullptr, this move was a deal
     if(currentEntry.parent == nullptr && currentEntry.child == nullptr)
     {
-        undoDeal();
+        undoDeal(currentEntry.numCards);
         return;
     }
 
@@ -37,7 +37,7 @@ void SPUndoAction::undo() {
 
     // TODO: Should raiseToFront just be a part of addToPile?
     currentEntry.child->raiseToFront();
-    currentEntry.parent->addToPile(currentEntry.child);
+    currentEntry.parent->addToPile(currentEntry.child, false, gameState->gameMode);
 
     if(auto* parentCard = dynamic_cast<SPCard*>(currentEntry.parent))
         if(currentEntry.parentFaceUp != parentCard->isFaceUp())
@@ -60,15 +60,15 @@ void SPUndoAction::undo() {
         currentEntry.child->deselect();
 }
 
-void SPUndoAction::undoDeal() {
-    for(auto iter = gameState->tableaus.rbegin(); iter != gameState->tableaus.rend(); iter++)
+void SPUndoAction::undoDeal(int numCards) {
+    for(int i = 0; i < numCards; i++)
+    // for(auto iter = gameState->tableaus.rbegin(); iter != gameState->tableaus.rend(); iter++)
     {
-        SPPile* tableau = *iter;
+        SPPile* tableau = gameState->tableaus[i];
         SPCard* card = dynamic_cast<SPCard*>(tableau->getPileEnd());
-        card->flip();
         card->removeFromPile();
         card->raiseToFront();
-        gameState->stock->addToPile(card);
+        gameState->stock->addToPile(card, false, gameState->gameMode);
 
         if(gameState->cursor->getTarget() == card)
             gameState->cursor->setTarget(gameState->activeUIGrid->getElementBelow(card));

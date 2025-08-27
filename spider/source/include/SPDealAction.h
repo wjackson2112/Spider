@@ -9,8 +9,9 @@
 
 class SPDealAction : public SPGameplayAction
 {
-public:
-    explicit SPDealAction(SPGameState* gameState) : SPGameplayAction(gameState) {};
+    using SPGameplayAction::SPGameplayAction;
+// public:
+//     explicit SPDealAction(CFGameState* gameState) : SPGameplayAction(gameState) {};
 
 private:
     void deal();

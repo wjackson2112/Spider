@@ -53,35 +53,35 @@ SPSnapValidatorFourSuits::SPSnapValidatorFourSuits()
 
     // TODO: Move all these input bindings to some external class with a save/load serialization option
     // Window Inputs
-    InputManager::getInstance()->addBinding(KEY_ESCAPE, ACTION_PRESS, Event(Event::EVT_QUIT_GAME));
-    InputManager::getInstance()->addBinding(KEY_F1, ACTION_PRESS, Event(Event::EVT_WIREFRAME_MODE));
+    InputManager::getInstance()->addBinding(KEY_ESCAPE, BUTTON_ACTION_PRESS, Event(Event::EVT_QUIT_GAME));
+    InputManager::getInstance()->addBinding(KEY_F1, BUTTON_ACTION_PRESS, Event(Event::EVT_WIREFRAME_MODE));
 
     // Directional Input
-    InputManager::getInstance()->addBinding(MOUSE_BUTTON_NONE, ACTION_NONE, Event(SPEvent::EVT_DRAG));
-    InputManager::getInstance()->addBinding(GAMEPAD_BUTTON_DPAD_UP, ACTION_PRESS, Event(SPEvent::EVT_UP));
-    InputManager::getInstance()->addBinding(GAMEPAD_BUTTON_DPAD_DOWN, ACTION_PRESS, Event(SPEvent::EVT_DOWN));
-    InputManager::getInstance()->addBinding(GAMEPAD_BUTTON_DPAD_LEFT, ACTION_PRESS, Event(SPEvent::EVT_LEFT));
-    InputManager::getInstance()->addBinding(GAMEPAD_BUTTON_DPAD_RIGHT, ACTION_PRESS, Event(SPEvent::EVT_RIGHT));
+    InputManager::getInstance()->addBinding(MOUSE_BUTTON_NONE, BUTTON_ACTION_NONE, Event(SPEvent::EVT_DRAG));
+    InputManager::getInstance()->addBinding(GAMEPAD_BUTTON_DPAD_UP, BUTTON_ACTION_PRESS, Event(SPEvent::EVT_UP));
+    InputManager::getInstance()->addBinding(GAMEPAD_BUTTON_DPAD_DOWN, BUTTON_ACTION_PRESS, Event(SPEvent::EVT_DOWN));
+    InputManager::getInstance()->addBinding(GAMEPAD_BUTTON_DPAD_LEFT, BUTTON_ACTION_PRESS, Event(SPEvent::EVT_LEFT));
+    InputManager::getInstance()->addBinding(GAMEPAD_BUTTON_DPAD_RIGHT, BUTTON_ACTION_PRESS, Event(SPEvent::EVT_RIGHT));
 
     // Press
-    InputManager::getInstance()->addBinding(MOUSE_BUTTON_1, ACTION_PRESS, Event(SPEvent::EVT_PRESS));
-    InputManager::getInstance()->addBinding(GAMEPAD_BUTTON_A, ACTION_PRESS, Event(SPEvent::EVT_PRESS));
+    InputManager::getInstance()->addBinding(MOUSE_BUTTON_1, BUTTON_ACTION_PRESS, Event(SPEvent::EVT_PRESS));
+    InputManager::getInstance()->addBinding(GAMEPAD_BUTTON_A, BUTTON_ACTION_PRESS, Event(SPEvent::EVT_PRESS));
 
     // Release
-    InputManager::getInstance()->addBinding(MOUSE_BUTTON_1, ACTION_RELEASE, Event(SPEvent::EVT_RELEASE));
-    InputManager::getInstance()->addBinding(GAMEPAD_BUTTON_A, ACTION_RELEASE, Event(SPEvent::EVT_RELEASE));
+    InputManager::getInstance()->addBinding(MOUSE_BUTTON_1, BUTTON_ACTION_RELEASE, Event(SPEvent::EVT_RELEASE));
+    InputManager::getInstance()->addBinding(GAMEPAD_BUTTON_A, BUTTON_ACTION_RELEASE, Event(SPEvent::EVT_RELEASE));
 
     // Cancel
-    InputManager::getInstance()->addBinding(MOUSE_BUTTON_2, ACTION_RELEASE, Event(SPEvent::EVT_CANCEL));
-    InputManager::getInstance()->addBinding(GAMEPAD_BUTTON_B, ACTION_RELEASE, Event(SPEvent::EVT_CANCEL));
+    InputManager::getInstance()->addBinding(MOUSE_BUTTON_2, BUTTON_ACTION_RELEASE, Event(SPEvent::EVT_CANCEL));
+    InputManager::getInstance()->addBinding(GAMEPAD_BUTTON_B, BUTTON_ACTION_RELEASE, Event(SPEvent::EVT_CANCEL));
 
     // Deal
-    InputManager::getInstance()->addBinding(KEY_D, ACTION_PRESS, Event(SPEvent::EVT_DEAL));
-    InputManager::getInstance()->addBinding(GAMEPAD_BUTTON_Y, ACTION_PRESS, Event(SPEvent::EVT_DEAL));
+    InputManager::getInstance()->addBinding(KEY_D, BUTTON_ACTION_PRESS, Event(SPEvent::EVT_DEAL));
+    InputManager::getInstance()->addBinding(GAMEPAD_BUTTON_Y, BUTTON_ACTION_PRESS, Event(SPEvent::EVT_DEAL));
 
     // Undo
-    InputManager::getInstance()->addBinding(KEY_Z, ACTION_PRESS, Event(SPEvent::EVT_UNDO), MOD_CONTROL);
-    InputManager::getInstance()->addBinding(GAMEPAD_BUTTON_X, ACTION_PRESS, Event(SPEvent::EVT_UNDO));
+    InputManager::getInstance()->addBinding(KEY_Z, BUTTON_ACTION_PRESS, Event(SPEvent::EVT_UNDO), MOD_CONTROL);
+    InputManager::getInstance()->addBinding(GAMEPAD_BUTTON_X, BUTTON_ACTION_PRESS, Event(SPEvent::EVT_UNDO));
 
 
 #ifdef PILEPEEKER
@@ -387,7 +387,7 @@ bool SPGameState::validateRelease(CFPilable* parent, CFPilable* child)
 //
 //            switch(event.action)
 //            {
-//                case ACTION_NONE:
+//                case BUTTON_ACTION_NONE:
 //                {
 //#ifdef PILEPEEKER
 //                    lastMousePosition = event.position;
@@ -418,7 +418,7 @@ bool SPGameState::validateRelease(CFPilable* parent, CFPilable* child)
 //                switch(event.padButton)
 //                {
 ////                    case GAMEPAD_BUTTON_DPAD_UP: {
-////                        if (event.action == ACTION_PRESS)
+////                        if (event.action == BUTTON_ACTION_PRESS)
 ////                        {
 ////                            newTarget = gameState.activeUIGrid->getElementAbove(gameState.cursor->getTarget());
 ////                            if(!newTarget)
@@ -452,7 +452,7 @@ bool SPGameState::validateRelease(CFPilable* parent, CFPilable* child)
 ////                    }
 ////                    case GAMEPAD_BUTTON_DPAD_DOWN:
 ////                    {
-////                        if (event.action == ACTION_PRESS)
+////                        if (event.action == BUTTON_ACTION_PRESS)
 ////                        {
 ////                            newTarget = gameState.activeUIGrid->getElementBelow(gameState.cursor->getTarget());
 ////                            if(!newTarget)
@@ -484,7 +484,7 @@ bool SPGameState::validateRelease(CFPilable* parent, CFPilable* child)
 ////                    }
 ////                    case GAMEPAD_BUTTON_DPAD_LEFT:
 ////                    {
-////                        if (event.action == ACTION_PRESS)
+////                        if (event.action == BUTTON_ACTION_PRESS)
 ////                        {
 ////                            newTarget = gameState.activeUIGrid->getElementToLeft(gameState.cursor->getTarget());
 ////                            if(!newTarget)
@@ -517,7 +517,7 @@ bool SPGameState::validateRelease(CFPilable* parent, CFPilable* child)
 ////                    }
 ////                    case GAMEPAD_BUTTON_DPAD_RIGHT:
 ////                    {
-////                        if (event.action == ACTION_PRESS) {
+////                        if (event.action == BUTTON_ACTION_PRESS) {
 ////                            Entity* oldTarget = gameState.cursor->getTarget();
 ////                            if(oldTarget)
 ////                                newTarget = gameState.activeUIGrid->getElementToRight(gameState.cursor->getTarget());
@@ -556,11 +556,11 @@ bool SPGameState::validateRelease(CFPilable* parent, CFPilable* child)
 ////                    }
 ////                    case GAMEPAD_BUTTON_A:
 ////                    {
-////                        if (event.action == ACTION_PRESS) {
+////                        if (event.action == BUTTON_ACTION_PRESS) {
 ////                            gameState.selectAction->press();
 ////                            break;
 ////                        }
-////                        else if(event.action == ACTION_RELEASE)
+////                        else if(event.action == BUTTON_ACTION_RELEASE)
 ////                        {
 ////                            gameState.selectAction->release();
 ////                            break;
@@ -569,21 +569,21 @@ bool SPGameState::validateRelease(CFPilable* parent, CFPilable* child)
 ////                    }
 ////                    case GAMEPAD_BUTTON_B:
 ////                    {
-////                        if (event.action == ACTION_RELEASE) {
+////                        if (event.action == BUTTON_ACTION_RELEASE) {
 ////                            gameState.cancelAction->release(event);
 ////                        }
 ////                        break;
 ////                    }
 ////                    case GAMEPAD_BUTTON_Y:
 ////                    {
-////                        if (event.action == ACTION_PRESS) {
+////                        if (event.action == BUTTON_ACTION_PRESS) {
 ////                            gameState.dealAction->press(event);
 ////                        }
 ////                        break;
 ////                    }
 ////                    case GAMEPAD_BUTTON_X:
 ////                    {
-////                        if (event.action == ACTION_PRESS) {
+////                        if (event.action == BUTTON_ACTION_PRESS) {
 ////                            gameState.undoAction->press(event);
 ////                        }
 ////                        break;

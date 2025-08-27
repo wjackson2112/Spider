@@ -11,8 +11,9 @@
 
 class SPCancelAction : public SPGameplayAction
 {
-public:
-    explicit SPCancelAction(SPGameState* gameState) : SPGameplayAction(gameState) {};
+    using SPGameplayAction::SPGameplayAction;
+    // public:
+    // explicit SPCancelAction(CFGameState* gameState) : SPGameplayAction(gameState) {};
 
 private:
     void cancel();

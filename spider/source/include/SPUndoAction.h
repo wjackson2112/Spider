@@ -10,12 +10,13 @@
 
 class SPUndoAction : public SPGameplayAction
 {
-public:
-    explicit SPUndoAction(SPGameState* gameState) : SPGameplayAction(gameState) {};
+    using SPGameplayAction::SPGameplayAction;
+// public:
+//     explicit SPUndoAction(CFGameState* gameState) : SPGameplayAction(gameState) {};
 
 private:
     void undo();
-    void undoDeal();
+    void undoDeal(int numCards);
 
 public:
     // IEventReceiver Interface

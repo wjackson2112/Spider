@@ -8,12 +8,14 @@
 #include "SPPilable.h"
 #include "SPScene.h"
 
-class SPSnapValidator
+class SPSnapValidator : public IAnimationCompleteReceiver
 {
 public:
     virtual void initialSetup(Scene* scene) {};
+    virtual void updateLayout() {};
 
     virtual void reportAnimationComplete(SPPilable* pilable) {};
+    virtual void animationCompleteWithId(std::string identifier, Entity *entity) {}
 };
 
 #endif //SP_SNAP_VALIDATOR_H

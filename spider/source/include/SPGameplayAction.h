@@ -7,6 +7,7 @@
 
 #include "SPCard.h"
 #include "SPSnapValidatorFourSuits.h"
+#include "CFAction.h"
 
 enum SPActionState
 {
@@ -29,18 +30,19 @@ public:
     };
 };
 
-class SPGameplayAction : public IEventReceiver
+class SPGameplayAction : public CFAction<SPGameState>//public IEventReceiver
 {
-protected:
-    SPGameState* gameState;
+    using CFAction<SPGameState>::CFAction;
+// protected:
+    // SPGameState* gameState;
 
 public:
     SPActionState state = SA_IDLE;
 
-    SPGameplayAction(SPGameState* gameState) : gameState(gameState){}
+    // SPGameplayAction(SPGameState* gameState) : gameState(gameState){}
 
 protected:
-    SPCard* getTopmostCardAtPosition(glm::vec2 position);
+    // SPCard* getTopmostCardAtPosition(glm::vec2 position);
 };
 
 #endif //SP_GAMEPLAY_ACTION_H

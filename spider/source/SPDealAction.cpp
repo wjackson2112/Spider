@@ -12,14 +12,18 @@ void SPDealAction::deal()
         if(!tableau->getPileChild())
             return;
 
+    int numCardsDealt = 0;
     for(auto* tableau : gameState->tableaus)
     {
-        CFCard* card = dynamic_cast<CFCard*>(gameState->stock->getPileEnd());
-        card->raiseToFront();
-        card->flip();
-        tableau->addToPile(card);
+        if (gameState->stock->getDeckSize() > 0) {
+            numCardsDealt++;
+            CFCard* card = dynamic_cast<CFCard*>(gameState->stock->getPileEnd());
+            card->raiseToFront();
+            card->flip();
+            tableau->addToPile(card, false, gameState->gameMode);
+        }
     }
-    gameState->moveList.emplace_back(MoveEntry(nullptr, nullptr));
+    gameState->moveList.emplace_back(MoveEntry(numCardsDealt));
 
     gameState->unselectedUIGrid.clearBearing();
     gameState->updateUnselectedUIGrid();
