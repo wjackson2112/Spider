@@ -65,8 +65,8 @@ bool NSSelectAction::validate(CFCard* grabbedCard)
 void NSSelectAction::press()
 {
     glm::vec2 position = InputManager::getCursorPosition();
-    if(InputManager::getInstance()->getInputMode() == IM_GAMEPAD)
-        position = gameMode->gameState->cursor->getWorldTransform().getPosition2();
+    // if(InputManager::getInstance()->getInputMode() == IM_GAMEPAD)
+    //     position = gameMode->gameState->cursor->getWorldTransform().getPosition2();
 
     // There's already a selected card, do nothing
     if(gameMode->gameState->grabbedCard)
@@ -100,7 +100,7 @@ void NSSelectAction::press()
 
     state = AS_PRESSED;
     std::cout << "GRABBING" << std::endl;
-    gameMode->gameState->cursor->setTarget(gameMode->gameState->grabbedCard);
+    // gameMode->gameState->cursor->setTarget(gameMode->gameState->grabbedCard);
 }
 
 void NSSelectAction::drag(glm::vec2 position) {
@@ -115,7 +115,7 @@ void NSSelectAction::drag(glm::vec2 position) {
     gameMode->gameState->grabbedCard->getTransform()->setPosition2(
             glm::vec2(position.x - gameMode->gameState->grabOffset.x, position.y - gameMode->gameState->grabOffset.y));
     state = AS_DRAGGING;
-    gameMode->gameState->cursor->setTarget(gameMode->gameState->grabbedCard);
+    // gameMode->gameState->cursor->setTarget(gameMode->gameState->grabbedCard);
     // std::cout << "DRAGGING" << std::endl;
 }
 
@@ -276,8 +276,8 @@ void NSSelectAction::eventCallback(Event event) {
     {
         case Event::EVT_SWITCH_INPUT_MODE:
             EventManager::getInstance()->broadcastEvent(Event(NSEvent::EVT_CANCEL));
-            if(InputManager::getInstance()->getInputMode() == IM_GAMEPAD)
-                gameMode->gameState->cursor->setTarget(gameMode->gameState->tableaus[0]->getPileEnd());
+            // if(InputManager::getInstance()->getInputMode() == IM_GAMEPAD)
+            //     gameMode->gameState->cursor->setTarget(gameMode->gameState->tableaus[0]->getPileEnd());
             return;
         // case SPEvent::EVT_LEFT:
         //     newTarget = gameState->activeUIGrid->getElementToLeft(gameState->cursor->getTarget());
@@ -295,30 +295,30 @@ void NSSelectAction::eventCallback(Event event) {
             return;
     }
 
-    InputManager::setCursorPosition(gameMode->gameState->cursor->getWorldTransform().getPosition2().x,
-                                    gameMode->gameState->cursor->getWorldTransform().getPosition2().y);
+    // InputManager::setCursorPosition(gameMode->gameState->cursor->getWorldTransform().getPosition2().x,
+    //                                 gameMode->gameState->cursor->getWorldTransform().getPosition2().y);
 
     if(!newTarget)
         return;
 
-    gameMode->gameState->cursor->setTarget(newTarget);
+    // gameMode->gameState->cursor->setTarget(newTarget);
 
     // Move the grabbed card and point to it
-    if (gameMode->gameState->grabbedCard)
-    {
-        glm::vec2 cursorPosition = gameMode->gameState->cursor->getWorldTransform().getPosition2();
-        auto offset = glm::vec3(0);
-        if(auto* pilableTarget = dynamic_cast<CFPilable*>(newTarget))
-        {
-            if (pilableTarget == pilableTarget->getPileRoot())
-                offset = pilableTarget->getRootOffset();
-            else
-                offset = pilableTarget->getPileOffset();
-        }
-
-        glm::vec2 newPosition = cursorPosition + glm::vec2(offset.x, offset.y);
-
-        drag(newPosition);
-        gameMode->gameState->cursor->setTarget(gameMode->gameState->grabbedCard);
-    }
+    // if (gameMode->gameState->grabbedCard)
+    // {
+    //     glm::vec2 cursorPosition = gameMode->gameState->cursor->getWorldTransform().getPosition2();
+    //     auto offset = glm::vec3(0);
+    //     if(auto* pilableTarget = dynamic_cast<CFPilable*>(newTarget))
+    //     {
+    //         if (pilableTarget == pilableTarget->getPileRoot())
+    //             offset = pilableTarget->getRootOffset();
+    //         else
+    //             offset = pilableTarget->getPileOffset();
+    //     }
+    //
+    //     glm::vec2 newPosition = cursorPosition + glm::vec2(offset.x, offset.y);
+    //
+    //     drag(newPosition);
+    //     gameMode->gameState->cursor->setTarget(gameMode->gameState->grabbedCard);
+    // }
 }

@@ -12,10 +12,14 @@
 
 void NSDealAction::deal()
 {
+    // Can't start a deal while another is in progress
+    if(gameMode->gameState->stock->isDealing())
+        return;
+
     // No dealing if any of the tableaus are empty
-    for(auto* tableau : gameMode->gameState->tableaus)
-        if(!tableau->getPileChild())
-            return;
+    // for(auto* tableau : gameMode->gameState->tableaus)
+    //     if(!tableau->getPileChild())
+    //         return;
 
     int numCardsDealt = 0;
     for(auto* tableau : gameMode->gameState->tableaus)
@@ -25,13 +29,18 @@ void NSDealAction::deal()
             CFCard* card = dynamic_cast<CFCard*>(gameMode->gameState->stock->getPileEnd());
             card->raiseToFront();
             card->flip();
-            tableau->addToPile(card, false, gameMode->gameState->gameMode);
+            tableau->addToPile(card, false, this, static_cast<AnimCompleteFunction>(&NSDealAction::dealComplete));
         }
     }
     gameMode->gameState->moveList.emplace_back(MoveEntry(numCardsDealt));
 
     // gameState->unselectedUIGrid.clearBearing();
     // gameState->updateUnselectedUIGrid();
+}
+
+void NSDealAction::dealComplete(std::string identifier, Entity* entity)
+{
+    // dynamic_cast<CFCard*>(entity)->flip();
 }
 
 void NSDealAction::eventCallback(Event event) {

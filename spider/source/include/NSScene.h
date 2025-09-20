@@ -16,6 +16,7 @@ class NSScene : public Scene
 
 public:
     NSScene();
+    ~NSScene();
 };
 
 #endif //NS_SCENE_H

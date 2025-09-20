@@ -8,7 +8,7 @@
 #include "CFAction.h"
 class NSGameMode;
 
-class NSDealAction : public CFAction<NSGameMode>
+class NSDealAction : public CFAction<NSGameMode>, IAnimationCompleteReceiver
 {
     using CFAction::CFAction;
     // public:
@@ -16,6 +16,7 @@ class NSDealAction : public CFAction<NSGameMode>
 
 private:
     void deal();
+    void dealComplete(std::string identifier, Entity* entity);
 
 public:
     // IEventReceiver Interface

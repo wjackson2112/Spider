@@ -27,7 +27,7 @@ struct NSGameState : public CFGameState
     std::vector<CFCard*> ghostCards;
     CFDeck* stock;
 
-    SPCursor* cursor;
+    // SPCursor* cursor;
 
     // UIGrid unselectedUIGrid;
     // UIGrid selectedUIGrid;

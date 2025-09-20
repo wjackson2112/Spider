@@ -43,6 +43,7 @@ public:
 public:
     //SPSnapValidator
     void initialSetup(Scene* scene) override;
+    void dealComplete(std::string identifier, Entity* entity);
     void updateLayout() override;
 
     void animationCompleteWithId(std::string identifier, Entity* entity) override;

@@ -19,6 +19,11 @@ NSScene::NSScene()
     gameState = new NSGameState();
     gameMode = new NSGameMode(gameState);
 
-    // auto gameMode = addEntity<NSGameMode>();
     gameMode->initialSetup(this);
+}
+
+NSScene::~NSScene()
+{
+    delete gameMode;
+    delete gameState;
 }
