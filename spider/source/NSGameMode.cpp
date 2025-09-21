@@ -178,7 +178,7 @@ void NSGameMode::initialSetup(Scene *scene)
     // }
 
     // Add all cards to the stock
-    gameState->stock = scene->addEntity<CFDeck>(glm::vec2(10.f, 10.f), .15);
+    gameState->stock = scene->addEntity<CFDeck>(glm::vec2(10.f, 10.f), .125f);
     for (auto* card : gameState->cards) {
         gameState->stock->addToPile(card);
     }
