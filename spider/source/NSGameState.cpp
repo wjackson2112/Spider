@@ -3,6 +3,7 @@
 //
 
 #include "NSGameState.h"
+#include "NSGameMode.h"
 
 #include "SpriteComponent2D.h"
 #include "AnimationComponent.h"
@@ -12,10 +13,7 @@ NSGameState::~NSGameState() = default;
 
 
 
-void NSGameState::animationCompleteWithId(std::string identifier, Entity *entity)
-{
-    gameMode->animationCompleteWithId(identifier, entity);
-}
+
 
 // void NSGameState::updateUnselectedUIGrid()
 // {

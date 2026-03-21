@@ -12,9 +12,11 @@
 #include "NSSelectAction.h"
 #include "NSCancelAction.h"
 #include "NSDealAction.h"
+#include "NSResetAction.h"
 #include "NSUndoAction.h"
 #include "OptionsManager.h"
 #include "SPGameplayAction.h"
+#include "AnimationComponent.h"
 
 NSGameMode::NSGameMode(NSGameState* gameState)
 : gameState(gameState)
@@ -26,10 +28,13 @@ NSGameMode::NSGameMode(NSGameState* gameState)
 //    auto* inputComponent = new InputComponent(config);
 //    addComponent(inputComponent);
 
+    gameState->gameMode = this;
+
     selectAction = new NSSelectAction(this);
     cancelAction = new NSCancelAction(this);
     dealAction = new NSDealAction(this);
     undoAction = new NSUndoAction(this);
+    resetAction = new NSResetAction(this);
 
     // TODO: Move all these input bindings to some external class with a save/load serialization option
     // Window Inputs
@@ -62,6 +67,10 @@ NSGameMode::NSGameMode(NSGameState* gameState)
     // Undo
     InputManager::getInstance()->addBinding(KEY_Z, BUTTON_ACTION_PRESS, Event(SPEvent::EVT_UNDO), MOD_CONTROL);
     InputManager::getInstance()->addBinding(GAMEPAD_BUTTON_X, BUTTON_ACTION_PRESS, Event(SPEvent::EVT_UNDO));
+
+    // Game Flow
+    InputManager::getInstance()->addBinding(KEY_R, BUTTON_ACTION_PRESS, Event(SPEvent::EVT_RESET_GAME));
+
 
 
 #ifdef PILEPEEKER
@@ -131,8 +140,7 @@ void NSGameMode::initialSetup(Scene *scene)
 //        }
     }
 
-    if(!easyDeal)
-        gameState->shuffleCards();
+
 
     // std::shuffle(std::begin(*cardSet), std::end(gameState->cards), rng);
     // std::shuffle(std::begin(gameState->cards), std::end(gameState->cards), rng);
@@ -180,8 +188,10 @@ void NSGameMode::initialSetup(Scene *scene)
     // Add all cards to the stock
     gameState->stock = scene->addEntity<CFDeck>(glm::vec2(10.f, 10.f), .125f);
     for (auto* card : gameState->cards) {
-        gameState->stock->addToPile(card);
+        gameState->stock->addToPile(card, false, "loadStock");
     }
+    if(!easyDeal)
+        gameState->stock->shuffle();
 
     // Deal face down cards into tableaus
     // if (!easyDeal) {
@@ -190,48 +200,7 @@ void NSGameMode::initialSetup(Scene *scene)
 
     updateLayout();
 
-    for (int i = 0; i < gameState->tableaus.size(); i++)
-    {
-        if (easyDeal)
-        {
-            for (int j = gameState->tableaus.size() - i - 1; j < gameState->tableaus.size(); j++)
-            {
-                gameState->stock->deal(gameState->tableaus[j]);
-            }
-        }
-        else
-        {
-            for (int j = i; j < gameState->tableaus.size(); j++)
-            {
-                IAnimationCompleteReceiver* receiver = nullptr;
-                AnimCompleteFunction callback = nullptr;
-
-                if(i == gameState->tableaus.size() - 1 && j == gameState->tableaus.size() - 1)
-                {
-                    receiver = this;
-                    callback = static_cast<AnimCompleteFunction>(&NSGameMode::dealComplete);
-                }
-
-                gameState->stock->deal(gameState->tableaus[j], receiver, callback);
-            }
-        }
-        // if (easyDeal) {
-        //     for (int j = gameState->tableaus.size() - i - 1; j < gameState->tableaus.size(); j++) {
-        //         auto* card = reinterpret_cast<CFCard*>(gameState->stock->getPileEnd());
-        //         gameState->tableaus[j]->addToPile(card, true);
-        //         if (i == gameState->tableaus.size() - 1)
-        //             card->flip();
-        //     }
-        // }
-        // else {
-        //     for (int j = i; j < gameState->tableaus.size(); j++) {
-        //         auto* card = reinterpret_cast<CFCard*>(gameState->stock->getPileEnd());
-        //         gameState->tableaus[j]->addToPile(card, true);
-        //         if (j == i)
-        //             card->flip();
-        //     }
-        // }
-    }
+    deal();
 
     // One face up card in each pile
     // for(auto* tableau : gameState->tableaus)
@@ -252,11 +221,68 @@ void NSGameMode::initialSetup(Scene *scene)
     // gameState->updateUnselectedUIGrid();
 }
 
-void NSGameMode::dealComplete(std::string identifier, Entity* entity)
+void NSGameMode::deal()
+{
+    // Classic deal
+    int cardsToDeal = 5 * numTableaus;
+    for(int i = 0; i < cardsToDeal; i++)
+    {
+        CFPile* currTableau = gameState->tableaus[i%numTableaus];
+        gameState->stock->deal(currTableau);
+    }
+
+    // for (int i = 0; i < gameState->tableaus.size(); i++)
+    // {
+    //     if (easyDeal)
+    //     {
+    //         for (int j = gameState->tableaus.size() - i - 1; j < gameState->tableaus.size(); j++)
+    //         {
+    //             gameState->stock->deal(gameState->tableaus[j]);
+    //         }
+    //     }
+    //     else
+    //     {
+    //         for (int j = i; j < gameState->tableaus.size(); j++)
+    //         {
+    //             // IAnimationCompleteReceiver* receiver = nullptr;
+    //             // AnimCompleteFunction callback = nullptr;
+    //             //
+    //             // if(i == gameState->tableaus.size() - 1 && j == gameState->tableaus.size() - 1)
+    //             // {
+    //             //     receiver = this;
+    //             //     callback = static_cast<AnimCompleteFunction>(&NSGameMode::dealComplete);
+    //             // }
+    //
+    //             gameState->stock->deal(gameState->tableaus[j]);
+    //         }
+    //     }
+    //     // if (easyDeal) {
+    //     //     for (int j = gameState->tableaus.size() - i - 1; j < gameState->tableaus.size(); j++) {
+    //     //         auto* card = reinterpret_cast<CFCard*>(gameState->stock->getPileEnd());
+    //     //         gameState->tableaus[j]->addToPile(card, true);
+    //     //         if (i == gameState->tableaus.size() - 1)
+    //     //             card->flip();
+    //     //     }
+    //     // }
+    //     // else {
+    //     //     for (int j = i; j < gameState->tableaus.size(); j++) {
+    //     //         auto* card = reinterpret_cast<CFCard*>(gameState->stock->getPileEnd());
+    //     //         gameState->tableaus[j]->addToPile(card, true);
+    //     //         if (j == i)
+    //     //             card->flip();
+    //     //     }
+    //     // }
+    // }
+}
+
+void NSGameMode::dealComplete(std::string identifier)
 {
     for (int i = 0; i < gameState->tableaus.size(); i++)
     {
-        dynamic_cast<CFCard*>(gameState->tableaus[i]->getPileEnd())->flip();
+        CFCard* card = dynamic_cast<CFCard*>(gameState->tableaus[i]->getPileEnd());
+        if (card->isFaceDown())
+            card->flip();
+        rescalePile(gameState->tableaus[i]);
     }
 }
 
@@ -350,12 +376,10 @@ void NSGameMode::updateLayout()
     }
 }
 
-void NSGameMode::animationCompleteWithId(std::string identifier, Entity *entity)
+void NSGameMode::cardAnimationComplete(CFCard* card, std::string identifier)
 {
-    CFPilable* pilable = dynamic_cast<CFPilable*>(entity);
-
-    if(pilable->isSelected())
-        pilable->deselect();
+    if(card->isSelected())
+        card->deselect();
 
     // TODO: Rescale just the two affected piles
     for(auto* tableau : gameState->tableaus)
@@ -363,7 +387,7 @@ void NSGameMode::animationCompleteWithId(std::string identifier, Entity *entity)
 
     // All piles filled, you win!
     // TODO: Maybe it's worth checking if the parent is an outpile too to optimize this?
-    if(dynamic_cast<CFCard*>(pilable)->getRank() == CF_RANK_KING)
+    if(dynamic_cast<CFCard*>(card)->getRank() == CF_RANK_KING)
     {
         bool winDetected = gameState->foundations.size() == numSets;
 
@@ -380,16 +404,16 @@ void NSGameMode::animationCompleteWithId(std::string identifier, Entity *entity)
     }
 
     for(auto foundation : gameState->foundations)
-        if(pilable->getPileRoot() == foundation)
+        if(card->getPileRoot() == foundation)
             return;
 
-    if(pilable->getPileRoot() == gameState->stock)
-    {
-        dynamic_cast<CFCard *>(pilable)->flip();
-        return;
-    }
+    // if(card->getPileRoot() == gameState->stock)
+    // {
+    //     dynamic_cast<CFCard *>(card)->flip();
+    //     return;
+    // }
 
-    handleCompleteSuitIfFound(pilable);
+    handleCompleteSuitIfFound(card);
 }
 
 void NSGameMode::handleCompleteSuitIfFound(CFPilable *pilable)
@@ -460,7 +484,7 @@ void NSGameMode::handleCompleteSuitIfFound(CFPilable *pilable)
 
         topCard->removeFromPile();
         topCard->raiseToFront();
-        gameState->foundations[currFoundation]->addToPile(topCard, false, this);
+        gameState->foundations[currFoundation]->addToPile(topCard, false);//, this);
         currFoundation++;
 
         // gameState->updateUnselectedUIGrid();
@@ -478,6 +502,19 @@ void NSGameMode::rescalePile(CFPilable* pilable)
     for(auto* foundation : gameState->foundations)
         if(pilable->getPileRoot() == foundation)
             return;
+
+    // Don't mess with piles that have cards moving
+    for (CFPilable *currPilable = pilable->getPileRoot();
+         currPilable != nullptr; currPilable = currPilable->getPileChild())
+    {
+        if(AnimationComponent* animComp = currPilable->getComponent<AnimationComponent>())
+        {
+            if(animComp->hasUnfinishedAnimations())
+            {
+                return;
+            }
+        }
+    }
 
     glm::vec2 viewportRes = OptionsManager::getInstance()->getViewportResolution();
 
@@ -507,6 +544,39 @@ void NSGameMode::rescalePile(CFPilable* pilable)
                 currPilable->snapTo(currPilable->getPileParent()->getPileOffset());
         }
     }
+}
+
+void NSGameMode::resetGame()
+{
+    // Don't allow reset while dealing
+    if(gameState->stock->isDealing())
+        return;
+
+    bool signaled = false;
+    for(CFCard* card : gameState->cards)
+    {
+        if(card->isFaceUp())
+            card->flip();
+
+        if(card->getPileRoot() != gameState->stock)
+        {
+            if(signaled)
+                gameState->stock->addToPile(card);
+            else
+            {
+                signaled = true;
+                gameState->stock->getPileEnd()->addToPile(card, false, "resetGameComplete");
+            }
+        }
+    }
+
+    gameState->moveList.clear();
+}
+
+void NSGameMode::resetGameComplete()
+{
+    gameState->stock->shuffle();
+    deal();
 }
 
 void NSGameMode::resolutionUpdated(glm::vec2 oldRes, glm::vec2 newRes)

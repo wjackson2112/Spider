@@ -3,6 +3,9 @@ cmake_minimum_required(VERSION 3.18)
 # set the project name
 project(Spider)
 
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
 if(EMSCRIPTEN)
 #    add_compile_options("-s" "USE_GLFW=3")
 #    add_compile_options("-s" "USE_FREETYPE=1")
@@ -12,7 +15,7 @@ if(EMSCRIPTEN)
 #    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s USE_FREETYPE=1 -s USE_PTHREADS -pthread ")
 #    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} -s USE_GLFW=3 -s USE_WEBGL2=1 -s PROXY_TO_PTHREAD -s MODULARIZE=1 -s EXPORT_NAME='Spider' -pthread  --emrun --preload-file assets --preload-file shaders -sSINGLE_FILE")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s USE_FREETYPE=1 -O0 -g -fdebug-compilation-dir=${PROJECT_SOURCE_DIR}")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} --shell-file ${PROJECT_SOURCE_DIR}/spider/build/shell_custom.html -s WASM=1 -s USE_GLFW=3 -s USE_WEBGL2=1 --preload-file assets --preload-file es_shaders@shaders -s ALLOW_MEMORY_GROWTH -gsplit-dwarf -gpubnames -gdwarf-5")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} --shell-file ${PROJECT_SOURCE_DIR}/spider/build/shell_custom.html -s WASM=1 -s USE_GLFW=3 -s USE_WEBGL2=1 --preload-file ${CMAKE_CURRENT_SOURCE_DIR}/spider/assets@assets --preload-file ${CMAKE_CURRENT_SOURCE_DIR}/spider/es_shaders@shaders -s ALLOW_MEMORY_GROWTH -gsplit-dwarf -gpubnames -gdwarf-5")
 
     set(CMAKE_EXECUTABLE_SUFFIX ".html") # This line is used to set your executable to build with the emscripten html template so taht you can directly open it.
 endif()

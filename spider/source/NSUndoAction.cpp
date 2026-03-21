@@ -43,7 +43,7 @@ void NSUndoAction::undo() {
 
     // TODO: Should raiseToFront just be a part of addToPile?
     currentEntry.child->raiseToFront();
-    currentEntry.parent->addToPile(currentEntry.child, false, gameMode->gameState->gameMode);
+    currentEntry.parent->addToPile(currentEntry.child, false);//, gameMode->gameState->gameMode);
 
     if(auto* parentCard = dynamic_cast<CFCard*>(currentEntry.parent))
         if(currentEntry.parentFaceUp != parentCard->isFaceUp())
@@ -70,11 +70,13 @@ void NSUndoAction::undoDeal(int numCards) {
     for(int i = 0; i < numCards; i++)
     // for(auto iter = gameState->tableaus.rbegin(); iter != gameState->tableaus.rend(); iter++)
     {
-        CFPile* tableau = gameMode->gameState->tableaus[i];
+        CFPile* tableau = gameMode->gameState->tableaus[numCards-i-1];
         CFCard* card = dynamic_cast<CFCard*>(tableau->getPileEnd());
         card->removeFromPile();
         card->raiseToFront();
-        gameMode->gameState->stock->addToPile(card, false, gameMode);
+        if(card->isFaceUp())
+            card->flip();
+        gameMode->gameState->stock->addToPile(card, false);//, gameMode);
 
         // if(gameState->cursor->getTarget() == card)
         //     gameState->cursor->setTarget(gameState->activeUIGrid->getElementBelow(card));

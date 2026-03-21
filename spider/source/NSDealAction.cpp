@@ -17,19 +17,16 @@ void NSDealAction::deal()
         return;
 
     // No dealing if any of the tableaus are empty
-    // for(auto* tableau : gameMode->gameState->tableaus)
-    //     if(!tableau->getPileChild())
-    //         return;
+    for(auto* tableau : gameMode->gameState->tableaus)
+        if(!tableau->getPileChild())
+            return;
 
     int numCardsDealt = 0;
     for(auto* tableau : gameMode->gameState->tableaus)
     {
         if (gameMode->gameState->stock->getDeckSize() > 0) {
             numCardsDealt++;
-            CFCard* card = dynamic_cast<CFCard*>(gameMode->gameState->stock->getPileEnd());
-            card->raiseToFront();
-            card->flip();
-            tableau->addToPile(card, false, this, static_cast<AnimCompleteFunction>(&NSDealAction::dealComplete));
+            gameMode->gameState->stock->deal(tableau);
         }
     }
     gameMode->gameState->moveList.emplace_back(MoveEntry(numCardsDealt));
@@ -38,9 +35,9 @@ void NSDealAction::deal()
     // gameState->updateUnselectedUIGrid();
 }
 
-void NSDealAction::dealComplete(std::string identifier, Entity* entity)
+void NSDealAction::dealComplete(std::string identifier)
 {
-    // dynamic_cast<CFCard*>(entity)->flip();
+    // dynamic_cast<CFCard*>(entity)->animationComplete(identifier);
 }
 
 void NSDealAction::eventCallback(Event event) {

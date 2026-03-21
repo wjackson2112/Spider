@@ -20,7 +20,7 @@ bool SPSelectAction::validate(SPCard* grabbedCard)
     if(grabbedCard->getPileRoot() == gameState->stock)
         return false;
 
-    std::cout << gameState->foundations.size() << std::endl;
+    // std::cout << gameState->foundations.size() << std::endl;
 
     for(auto foundation : gameState->foundations)
         if(grabbedCard->getPileRoot() == foundation)
@@ -95,7 +95,7 @@ void SPSelectAction::press()
     }
 
     state = SA_PRESSED;
-    std::cout << "GRABBING" << std::endl;
+    // std::cout << "GRABBING" << std::endl;
     gameState->cursor->setTarget(gameState->grabbedCard);
 }
 

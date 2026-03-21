@@ -8,7 +8,6 @@
 #include "Scene.h"
 #include "UIGrid.h"
 
-#include "CFGameMode.h"
 #include "CFPile.h"
 #include "CFCard.h"
 #include "CFGameState.h"
@@ -19,9 +18,11 @@
 // #define NO_GRAB glm::vec2(-1, -1)
 // #define DRAG_THRESHOLD 50
 
+class NSGameMode;
+
 struct NSGameState : public CFGameState
 {
-    CFGameMode* gameMode = nullptr;
+    // NSGameMode* gameMode = nullptr;
     std::vector<CFPile*> tableaus;
     std::vector<CFPile*> foundations;
     std::vector<CFCard*> ghostCards;
@@ -41,7 +42,9 @@ struct NSGameState : public CFGameState
 
     virtual ~NSGameState();
 
-    void animationCompleteWithId(std::string identifier, Entity *entity) override;
+    void cardAnimationComplete(CFCard* card);
+
+
 
     // bool validateRelease(CFPilable* parent, CFPilable* child);
 

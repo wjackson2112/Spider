@@ -10,6 +10,7 @@
 #include "CFDeck.h"
 #include "NSEvent.h"
 #include "NSGameMode.h"
+#include "OptionsManager.h"
 
 bool NSSelectAction::isDraggingCard() {
     return gameMode->gameState->grabbedCard && state == AS_DRAGGING;
@@ -24,7 +25,7 @@ bool NSSelectAction::validate(CFCard* grabbedCard)
     if(grabbedCard->getPileRoot() == gameMode->gameState->stock)
         return false;
 
-    std::cout << gameMode->gameState->foundations.size() << std::endl;
+    // std::cout << gameMode->gameState->foundations.size() << std::endl;
 
     for(auto foundation : gameMode->gameState->foundations)
         if(grabbedCard->getPileRoot() == foundation)
@@ -99,7 +100,7 @@ void NSSelectAction::press()
     }
 
     state = AS_PRESSED;
-    std::cout << "GRABBING" << std::endl;
+    // std::cout << "GRABBING" << std::endl;
     // gameMode->gameState->cursor->setTarget(gameMode->gameState->grabbedCard);
 }
 
@@ -109,7 +110,8 @@ void NSSelectAction::drag(glm::vec2 position) {
 
     glm::vec2 difference = position - gameMode->gameState->grabStartPosition;
     float differenceLen = glm::length(position - gameMode->gameState->grabStartPosition);
-    if (state == AS_IDLE && differenceLen <= DRAG_THRESHOLD)
+    float dragThresold = OptionsManager::getInstance()->getViewportResolution().x / 16;
+    if (state == AS_IDLE && differenceLen <= dragThresold)
         return;
 
     gameMode->gameState->grabbedCard->getTransform()->setPosition2(
@@ -169,7 +171,7 @@ void NSSelectAction::release() {
         }
 
         //    SPPilable* oldParent = gameState.moveList.back().parent;
-        parent->addToPile(child, false, gameMode/*, inputMode == IM_GAMEPAD*/);
+        parent->addToPile(child, false);//, child, static_cast<AnimCompleteFunction>(&CFCard::animationComplete)/*, inputMode == IM_GAMEPAD*/);
 
         //    if(inputMode == IM_GAMEPAD)
         //    {

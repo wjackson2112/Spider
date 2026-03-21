@@ -4,6 +4,7 @@
 
 #include <iostream>
 
+#include "Globals.h"
 #include "Window.h"
 
 #include "NSGame.h"
@@ -25,8 +26,9 @@
 
 NSGame::NSGame()
 //        : Game(new MainMenu())
-        : Game(new SPMainMenu())
+//         : Game(new SPMainMenu())
 //          : Game(new SPScene())
+        : Game(new NSScene())
 {
     EventManager::getInstance()->registerReceiver(this);
 }
@@ -40,10 +42,10 @@ void NSGame::eventCallback(Event event)
             shouldStartNewGame = true;
             break;
         }
-        case Event::EVT_WON_GAME:
-        {
-            shouldReturnToMenu = true;
-        }
+        // case Event::EVT_WON_GAME:
+        // {
+        //     shouldReturnToMenu = true;
+        // }
         default:
             break;
     }
@@ -90,7 +92,7 @@ int main()
     SteamClient()->SetWarningMessageHook( &SteamAPIDebugTextHook );
 #endif
 
-    auto window = Window();
+    // GWindow = Window();
 
     NSGame* nil = new NSGame();
 
@@ -98,10 +100,10 @@ int main()
         nil->draw();
 
         // Double buffer
-        window.swapBuffers();
+        GWindow.swapBuffers();
 
         // Poll GL Events
-        window.processInput();
+        GWindow.processInput();
 
 #ifdef USE_STEAMWORKS
         steamworks_sdk.update();
@@ -117,7 +119,7 @@ int main()
 #ifdef __EMSCRIPTEN__
     emscripten_set_main_loop(main_loop, 0, true);
 #else
-    while(!window.shouldClose())
+    while(!GWindow.shouldClose())
     {
         main_loop();
     }
@@ -130,7 +132,7 @@ int main()
     SteamAPI_Shutdown();
 #endif
     delete nil;
-    window.close();
+    GWindow.close();
     return 0;
 }
 

@@ -14,7 +14,7 @@ NSScene::NSScene()
 {
     addEntity<CameraEntity2D>();
     addEntity<CFBackground>();
-    addEntity<SPFrameCounterEntity>();
+    // addEntity<SPFrameCounterEntity>();
 
     gameState = new NSGameState();
     gameMode = new NSGameMode(gameState);

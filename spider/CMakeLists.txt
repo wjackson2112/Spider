@@ -18,7 +18,8 @@ add_executable(Spider source/NSGame.cpp #source/SPGame.cpp
                       source/NSSelectAction.cpp
                       source/NSCancelAction.cpp
                       source/NSDealAction.cpp
-                      source/NSUndoAction.cpp)
+                      source/NSUndoAction.cpp
+                      source/NSResetAction.cpp)
 
 target_include_directories(Spider
                            PUBLIC
@@ -36,6 +37,9 @@ add_subdirectory(assets)
 
 if(EMSCRIPTEN)
     add_subdirectory(es_shaders)
+    target_link_options(Spider
+            PRIVATE
+            "-sEXPORTED_RUNTIME_METHODS=['requestFullscreen']")
 else()
     add_subdirectory(shaders)
 endif()

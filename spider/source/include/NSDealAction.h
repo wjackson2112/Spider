@@ -16,7 +16,7 @@ class NSDealAction : public CFAction<NSGameMode>, IAnimationCompleteReceiver
 
 private:
     void deal();
-    void dealComplete(std::string identifier, Entity* entity);
+    void dealComplete(std::string identifier);
 
 public:
     // IEventReceiver Interface

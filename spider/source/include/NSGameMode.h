@@ -15,14 +15,16 @@
 #include "NSSelectAction.h"
 #include "NSCancelAction.h"
 #include "NSDealAction.h"
+#include "NSResetAction.h"
 #include "NSUndoAction.h"
 
 class NSScene;
+class NSGameState;
 
 class NSGameMode : public CFGameMode, public IOptionsReceiver
 {
-    int numSets = 4;
-    int numTableaus = 7;
+    int numSets = 8;
+    int numTableaus = 10;
 
     std::random_device rd = std::random_device {};
     std::default_random_engine rng = std::default_random_engine {rd()};
@@ -34,6 +36,7 @@ class NSGameMode : public CFGameMode, public IOptionsReceiver
     NSCancelAction* cancelAction;
     NSDealAction* dealAction;
     NSUndoAction* undoAction;
+    NSResetAction* resetAction;
 
 public:
     NSGameState* gameState;
@@ -43,13 +46,16 @@ public:
 public:
     //SPSnapValidator
     void initialSetup(Scene* scene) override;
-    void dealComplete(std::string identifier, Entity* entity);
+    void deal();
+    void dealComplete(std::string identifier);
     void updateLayout() override;
 
-    void animationCompleteWithId(std::string identifier, Entity* entity) override;
+    void cardAnimationComplete(CFCard* card, std::string identifier) override;
 
     void handleCompleteSuitIfFound(CFPilable *pilable);
     void rescalePile(CFPilable* pilable);
+    void resetGame();
+    void resetGameComplete();
 
     //IOptionsReceiver
     void resolutionUpdated(glm::vec2 oldRes, glm::vec2 newRes) override;
