@@ -224,7 +224,7 @@ void NSGameMode::initialSetup(Scene *scene)
 void NSGameMode::deal()
 {
     // Classic deal
-    int cardsToDeal = 5 * numTableaus;
+    int cardsToDeal = 5 * numTableaus + 4;
     for(int i = 0; i < cardsToDeal; i++)
     {
         CFPile* currTableau = gameState->tableaus[i%numTableaus];
