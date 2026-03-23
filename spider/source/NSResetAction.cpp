@@ -1,3 +1,6 @@
+//  Copyright (c) 2026 William Jackson
+//  Licensed under the MIT License
+
 //
 // Created by will on 3/19/26.
 //
